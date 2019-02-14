@@ -3,14 +3,13 @@ const app = express();
 const path = require('path');
 const fs = require('fs').promises;
 const _ = require('lodash');
+const DataModel = require('./data-model');
 const { File } = require('file-graph-shared');
-
 const baseDir = process.argv[2];
 const dataFileName = 'filegraph.json';
 const dataFile = path.join(baseDir, dataFileName);
 
-const files = {};
-
+const dataModel = new DataModel();
 const startPromises = [];
 
 function loadFile() {
@@ -23,10 +22,7 @@ function loadFile() {
 
 function parseFileContent(content) {
     const filesJson = JSON.parse(content).files;
-    filesJson.forEach(f => {
-        const file = File.fromJSON(f);
-        files[file.getId()] = file;
-    });
+    filesJson.forEach(f => dataModel.addFile(File.fromJSON(f)));
 }
 
 function readDirectory(baseDirectory, subDir = '') {
@@ -46,21 +42,13 @@ function readDirectory(baseDirectory, subDir = '') {
                     });
 
 
-            })).then(fileArrays => {
-                return _.flatten(fileArrays);
-                // if (data.files[fileName] == null) {
-                //     data.files[fileName] = new File('', fileName);
-                // }
-            });
+            }))
+                .then(fileArrays => _.flatten(fileArrays));
         });
 }
 
 function addUnknownFiles(fileList) {
-    fileList.forEach(file => {
-        if (files[file.getId()] == null) {
-            files[file.getId()] = file;
-        }
-    });
+    fileList.forEach(file => dataModel.addFile(file));
 }
 
 startPromises.push(loadFile()
@@ -72,7 +60,7 @@ startPromises.push(loadFile()
 function saveDataAsync() {
     const toWrite = {
         version: 1,
-        files: _.values(files)
+        files: _.values(dataModel.files)
     };
 
     return fs.writeFile(dataFile, JSON.stringify(toWrite), 'utf8');
@@ -91,69 +79,18 @@ app.use('/js', express.static('../client/bin'));
 express.static('./entrypoints');
 
 app.get('/graph', (req, res) => {
-    const fileArray = _.values(files);
-    const nodes = _.range(0,100).map(i => fileArray[i]);
-
-
-    const fileFolderMap = {};
-    nodes.forEach(node => {
-        const path = node.path;
-        if (fileFolderMap[path] == null) {
-            fileFolderMap[path] = [];
-        }
-
-        fileFolderMap[path].push(node);
-    });
-
-    const fileTagMap = {};
-    nodes.forEach(file => {
-        file.tags.forEach(tag => {
-            if(fileTagMap[tag] == null) {
-                fileTagMap[tag] = [];
-            }
-            fileTagMap[tag].push(file);
-        });
-    });
-
-
-
-    const edges = [];
-    Object.keys(fileFolderMap).forEach(path => {
-        const files = fileFolderMap[path];
-        for (let i = 0; i < files.length; i++) {
-            const curFile = files[i];
-            for (let j = i + 1; j < files.length; j++) {
-                edges.push({ leftNode: curFile.getId(), rightNode: files[j].getId() });
-            }
-        }
-    });
-
-    Object.keys(fileTagMap).forEach(tag => {
-        const files = fileTagMap[tag];
-        for (let i = 0; i < files.length; i++) {
-            const curFile = files[i];
-            for (let j = i + 1; j < files.length; j++) {
-                edges.push({ leftNode: curFile.getId(), rightNode: files[j].getId() });
-            }
-        }
-    });
-
-
-
-
     res.json({
-        nodes, edges
+        nodes: dataModel.files,
+        edges: dataModel.edges
     });
 });
 
 app.post('/file', (req, res) => {
     const sendFile = File.fromJSON(JSON.parse(req.query.file));
-
-    const file = files[sendFile.getId()];
-    file.tags = sendFile.tags;
+    const changes = dataModel.updateFile(sendFile);
 
     saveDataAsync()
-        .then(() => res.sendStatus(200));
+        .then(() => res.send(changes));
 });
 
 
