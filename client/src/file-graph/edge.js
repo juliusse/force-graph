@@ -9,7 +9,7 @@ class Edge {
         this.el.setAttribute('x2', this.rightNode.x);
         this.el.setAttribute('y2', this.rightNode.y);
 
-        this.el.setAttribute('stroke', 'black');
+        this.el.setAttribute('stroke', '#dddddd');
         this.el.setAttribute('strokeWidth', '1px');
         this.el.classList.add('edge');
 

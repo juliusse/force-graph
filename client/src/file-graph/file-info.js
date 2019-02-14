@@ -1,5 +1,8 @@
 const template = `
-<div class="title">File Info</div>
+<div class="flex">
+    <div class="title">File Info</div>
+    <div class="btn-close">X</div>
+</div>
 <div class="group">
     <div class="label">Location</div>
     <div class="path"></div>
@@ -13,12 +16,14 @@ const template = `
     <div class="tags"></div>
 </div>`;
 
+const $ = require('jquery');
 const EditableText = require('../elements/editable-text');
 
 require('./file-info.less');
 class FileInfo {
-    constructor(file) {
+    constructor(file, listener) {
         this.file = file;
+        this.listener = listener;
 
         this.el = document.createElement('div');
         this.el.classList.add('file-info');
@@ -32,7 +37,7 @@ class FileInfo {
         this.el.querySelector('.name').innerText = file.name;
         this.el.querySelector('.tags').appendChild(this.tagsField.el);
 
-
+        $(this.el.querySelector('.btn-close')).on('click', listener.onFileInfoClose);
     }
 
     onTagsChanged(editableText, text) {

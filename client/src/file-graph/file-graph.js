@@ -94,8 +94,9 @@ class FileGraph {
     }
 
     update(timeDeltaInSec) {
-        _.values(this.nodes).forEach(node => {
-            node.update(timeDeltaInSec, this.nodes, this.center);
+        const nodes = _.values(this.nodes);
+        nodes.forEach(node => {
+            node.update(timeDeltaInSec, nodes, this.center);
         });
 
         this.edges.forEach(edge => {

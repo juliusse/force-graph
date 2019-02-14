@@ -57,10 +57,10 @@ function readDirectory(baseDirectory, subDir = '') {
 
 function addUnknownFiles(fileList) {
     fileList.forEach(file => {
-        if(files[file.getId()] == null) {
+        if (files[file.getId()] == null) {
             files[file.getId()] = file;
         }
-    })
+    });
 }
 
 startPromises.push(loadFile()
@@ -91,17 +91,63 @@ app.use('/js', express.static('../client/bin'));
 express.static('./entrypoints');
 
 app.get('/graph', (req, res) => {
-    const file1 = _.values(files)[0];
-    const file2 = _.values(files)[1];
+    const fileArray = _.values(files);
+    const nodes = _.range(0,100).map(i => fileArray[i]);
+
+
+    const fileFolderMap = {};
+    nodes.forEach(node => {
+        const path = node.path;
+        if (fileFolderMap[path] == null) {
+            fileFolderMap[path] = [];
+        }
+
+        fileFolderMap[path].push(node);
+    });
+
+    const tags = [];
+    nodes.forEach(node => {
+
+    });
+
+    const fileTagMap = {};
+    nodes.forEach(file => {
+        file.tags.forEach(tag => {
+            if(fileTagMap[tag] == null) {
+                fileTagMap[tag] = [];
+            }
+            fileTagMap[tag].push(file);
+        });
+    });
+
+
+
+    const edges = [];
+    Object.keys(fileFolderMap).forEach(path => {
+        const files = fileFolderMap[path];
+        for (let i = 0; i < files.length; i++) {
+            const curFile = files[i];
+            for (let j = i + 1; j < files.length; j++) {
+                edges.push({ leftNode: curFile.getId(), rightNode: files[j].getId() });
+            }
+        }
+    });
+
+    Object.keys(fileTagMap).forEach(tag => {
+        const files = fileTagMap[tag];
+        for (let i = 0; i < files.length; i++) {
+            const curFile = files[i];
+            for (let j = i + 1; j < files.length; j++) {
+                edges.push({ leftNode: curFile.getId(), rightNode: files[j].getId() });
+            }
+        }
+    });
+
+
+
 
     res.json({
-        nodes: [
-            file1,
-            file2,
-        ],
-        edges: [
-            { leftNode: file1.getId(), rightNode: file2.getId() }
-        ]
+        nodes, edges
     });
 });
 

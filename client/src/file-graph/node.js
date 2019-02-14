@@ -28,7 +28,8 @@ class Node {
         // this.textSvg.setAttribute('dy', '-5');
 
         this.textSvg.setAttribute('fill', 'black');
-        this.textSvg.setAttribute('font-weight', 'bold');
+        // this.textSvg.setAttribute('font-weight', 'bold');
+        this.textSvg.setAttribute('font-size','9px')
         this.textSvg.setAttribute('x', this.x - 15);
         this.textSvg.setAttribute('y', this.y - 5);
         this.el.appendChild(this.textSvg);
@@ -73,11 +74,14 @@ class Node {
 
         const forces = this.edges.map(edge => {
             const distanceInfo = edge.getDistanceInfo(this);
-            const forceStrength = Math.min(500, Math.max(0, distanceInfo.distance - desiredDistance)) / maxDistance * maxForce;
+            const distanceForStrength = distanceInfo.distance - desiredDistance;
+            const forceStrength = distanceForStrength <= 0 ? 0 :
+                distanceForStrength >= maxDistance ? timeDelta * maxForce :
+                    distanceForStrength / maxDistance * timeDelta * maxForce;
 
             return {
-                x: (distanceInfo.x / distanceInfo.distance) * timeDelta * forceStrength,
-                y: (distanceInfo.y / distanceInfo.distance) * timeDelta * forceStrength,
+                x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
+                y: distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength,
             };
         });
 
@@ -97,7 +101,7 @@ class Node {
         const desiredDistance = 100;
         const maxForce = 1000;
 
-        const forces = _.values(nodes).map(node => {
+        const forces = nodes.map(node => {
             if (node === this) {
                 return { x: 0, y: 0 };
             }
@@ -110,10 +114,12 @@ class Node {
                 distance: Math.sqrt(distanceX * distanceX + distanceY * distanceY),
             };
 
-            const forceStrength = Math.max(0, desiredDistance - distanceInfo.distance) / desiredDistance * maxForce;
+            const distanceForStrength = desiredDistance - distanceInfo.distance;
+            const forceStrength = distanceForStrength <= 0 ? 0 :
+                distanceForStrength / desiredDistance * maxForce * timeDelta;
             return {
-                x: (distanceInfo.x / distanceInfo.distance) * timeDelta * forceStrength,
-                y: (distanceInfo.y / distanceInfo.distance) * timeDelta * forceStrength,
+                x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
+                y: distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength,
             };
         });
 
