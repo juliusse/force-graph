@@ -13,6 +13,8 @@ const template = `
     <div class="tags"></div>
 </div>`;
 
+const EditableText = require('../elements/editable-text');
+
 require('./file-info.less');
 class FileInfo {
     constructor(file) {
@@ -22,9 +24,24 @@ class FileInfo {
         this.el.classList.add('file-info');
         this.el.innerHTML = template;
 
+        this.tagsField = new EditableText(file.tags.join(', '), {
+            onTextChange: this.onTagsChanged.bind(this)
+        });
+
         this.el.querySelector('.path').innerText = file.path;
         this.el.querySelector('.name').innerText = file.name;
-        this.el.querySelector('.tags').innerText = file.tags.join(',');
+        this.el.querySelector('.tags').appendChild(this.tagsField.el);
+
+
+    }
+
+    onTagsChanged(editableText, text) {
+        const newTags = text
+            .split(',')
+            .map(t => t.trim());
+
+        this.file.tags = newTags;
+        this.file.save();
     }
 }
 
