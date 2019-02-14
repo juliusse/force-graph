@@ -105,11 +105,6 @@ app.get('/graph', (req, res) => {
         fileFolderMap[path].push(node);
     });
 
-    const tags = [];
-    nodes.forEach(node => {
-
-    });
-
     const fileTagMap = {};
     nodes.forEach(file => {
         file.tags.forEach(tag => {
@@ -158,7 +153,7 @@ app.post('/file', (req, res) => {
     file.tags = sendFile.tags;
 
     saveDataAsync()
-        .then(() => res.send(200));
+        .then(() => res.sendStatus(200));
 });
 
 

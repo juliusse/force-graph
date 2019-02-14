@@ -10,6 +10,11 @@ class Node {
         this.yDelta = 0;
         this.file = file;
         this.edges = [];
+        this.timeSinceLastForceUpdate = 0;
+        this.currentForce = {
+            x: 0,
+            y: 0
+        };
 
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.el.classList.add('node');
@@ -47,7 +52,7 @@ class Node {
         };
     }
 
-    calculateCenterDelta(timeDelta, center) {
+    calculateCenterDelta(center) {
         const centerForceMaxStrength = 50;
         const centerForceMaxDistance = 400;
 
@@ -59,12 +64,12 @@ class Node {
 
 
         return {
-            x: (distanceToCenterX / distance) * timeDelta * forceStrength,
-            y: (distanceToCenterY / distance) * timeDelta * forceStrength,
+            x: (distanceToCenterX / distance) * forceStrength,
+            y: (distanceToCenterY / distance) * forceStrength,
         };
     }
 
-    calculateEdgeForce(timeDelta) {
+    calculateEdgeForce() {
         if (this.edges.length === 0) {
             return { x: 0, y: 0 };
         }
@@ -76,8 +81,8 @@ class Node {
             const distanceInfo = edge.getDistanceInfo(this);
             const distanceForStrength = distanceInfo.distance - desiredDistance;
             const forceStrength = distanceForStrength <= 0 ? 0 :
-                distanceForStrength >= maxDistance ? timeDelta * maxForce :
-                    distanceForStrength / maxDistance * timeDelta * maxForce;
+                distanceForStrength >= maxDistance ? maxForce :
+                    distanceForStrength / maxDistance * maxForce;
 
             return {
                 x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
@@ -97,8 +102,8 @@ class Node {
         };
     }
 
-    calculateRepellingForce(timeDelta, nodes) {
-        const desiredDistance = 100;
+    calculateRepellingForce(nodes) {
+        const desiredDistance = 150;
         const maxForce = 1000;
 
         const forces = nodes.map(node => {
@@ -116,7 +121,7 @@ class Node {
 
             const distanceForStrength = desiredDistance - distanceInfo.distance;
             const forceStrength = distanceForStrength <= 0 ? 0 :
-                distanceForStrength / desiredDistance * maxForce * timeDelta;
+                distanceForStrength / desiredDistance * maxForce;
             return {
                 x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
                 y: distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength,
@@ -135,14 +140,24 @@ class Node {
         };
     };
 
-    update(timeDelta, nodes, center) {
-        const centerDelta = { x: 0, y: 0 };//this.calculateCenterDelta(timeDelta, center);
-        const edgesDelta = this.calculateEdgeForce(timeDelta);
-        const repellingDelta = this.calculateRepellingForce(timeDelta, nodes);
+    update(timeDeltaInMs, nodes, center) {
+        this.timeSinceLastForceUpdate += timeDeltaInMs;
+        // console.log(this.timeSinceLastForceUpdate)
+        if(this.timeSinceLastForceUpdate > 250) {
+            const centerDelta = { x: 0, y: 0 };//this.calculateCenterDelta(timeDelta, center);
+            const edgesDelta = this.calculateEdgeForce();
+            const repellingDelta = this.calculateRepellingForce(nodes);
 
-        this.xDelta = this.xDelta + centerDelta.x + edgesDelta.x + repellingDelta.x;
-        this.yDelta = this.yDelta + centerDelta.y + edgesDelta.y + repellingDelta.y;
+            this.currentForce = {
+                x: centerDelta.x + edgesDelta.x + repellingDelta.x,
+                y: centerDelta.y + edgesDelta.y + repellingDelta.y
+            };
+            this.timeSinceLastForceUpdate = 0;
+        }
 
+
+        this.xDelta = this.xDelta + this.currentForce.x * timeDeltaInMs / 1000;
+        this.yDelta = this.yDelta + this.currentForce.y * timeDeltaInMs / 1000;
         this.el.setAttribute('transform', `translate(${this.xDelta},${this.yDelta})`);
     }
 }

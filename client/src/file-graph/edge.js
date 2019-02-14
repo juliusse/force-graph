@@ -2,6 +2,7 @@ class Edge {
     constructor(leftNode, rightNode) {
         this.leftNode = leftNode;
         this.rightNode = rightNode;
+        this.timeSinceLastUpdate = 0;
 
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         this.el.setAttribute('x1', this.leftNode.x);
@@ -29,11 +30,16 @@ class Edge {
         };
     }
 
-    update() {
-        this.el.setAttribute('x1', this.leftNode.position.x);
-        this.el.setAttribute('y1', this.leftNode.position.y);
-        this.el.setAttribute('x2', this.rightNode.position.x);
-        this.el.setAttribute('y2', this.rightNode.position.y);
+    update(timeDelta) {
+        this.timeSinceLastUpdate += timeDelta;
+
+        if (this.timeSinceLastUpdate > 1000) {
+            this.el.setAttribute('x1', this.leftNode.position.x);
+            this.el.setAttribute('y1', this.leftNode.position.y);
+            this.el.setAttribute('x2', this.rightNode.position.x);
+            this.el.setAttribute('y2', this.rightNode.position.y);
+            this.timeSinceLastUpdate = 0;
+        }
     }
 }
 

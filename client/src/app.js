@@ -1,12 +1,10 @@
-const _ = require('lodash');
 const $ = require('jquery');
-const graph = require('./miserables');
+
+const appContainer = document.querySelector('#file-graph-app');
+require('./app.less');
 
 const FileGraph = require('./file-graph/file-graph');
 const FileInfo = require('./file-graph/file-info');
-const appContainer = document.querySelector('#file-graph-app');
-
-require('./app.less');
 
 class App {
     constructor(element) {
@@ -27,9 +25,13 @@ class App {
     }
 
     start() {
-        this.fileGraph = new FileGraph(800, 500, this);
+        const width = 2500;
+        const height = 2500;
+        this.fileGraph = new FileGraph(width, height, this);
         this.fileGraph.loadDataAsync()
-            .then(() => this.graphContainer.appendChild(this.fileGraph.el));
+            .then(() => this.graphContainer.appendChild(this.fileGraph.el))
+            .then(() => this.graphContainer.scrollTo(width / 2 - 400, height / 2 - 250));
+
     }
 
     deselectNode() {
@@ -59,56 +61,25 @@ class App {
 const app = new App(appContainer);
 app.start();
 
-
-// $(masterSvg).on('click', () => {
-//     fileGraph.addNode(Math.random, 'title');
-//     const edgeToNode = _.values(nodes)[_.random(0, _.values(nodes).length - 1)];
-//     addNode(node);
-//
-//     addEdge(node, edgeToNode);
-// });
-
-
-// const node = new Node('id','title');
-// const node2 = new Node('id2','title');
-// const edge = new Edge(node,node2);
-// nodeGroup.appendChild(node.svg);
-// nodeGroup.appendChild(node2.svg);
-// edgeGroup.appendChild(edge.svg);
-//
-// nodes[node.id] = node;
-// nodes[node2.id] = node2;
-// edges.push(edge);
-
-// graph.nodes.forEach(n => {
-//     const node = new Node(n.id, n.id);
-//     nodeGroup.appendChild(node.svg);
-//
-//     nodes[node.id] = node;
-// });
-//
-// graph.links.forEach(link => {
-//     const node1 = nodes[link.source];
-//     const node2 = nodes[link.target];
-//     const edge = new Edge(node1, node2, link.value);
-//     edgeGroup.appendChild(edge.svg);
-//
-//     edges.push(edge);
-// });
-
-let lastRender = Date.now();
+let lastRender = null;
 
 let cycles = 0;
 const times = [];
-function loop(timestamp) {
-    const progress = timestamp - lastRender;
 
-    app.update(progress / 1000);
+function loop(timestamp) {
+    const start = Date.now();
+    if (lastRender === null) {
+        lastRender = timestamp;
+        window.requestAnimationFrame(loop);
+        return;
+    }
+    const progress = timestamp - lastRender;
+    app.update(Math.min(500, progress));
 
     lastRender = timestamp;
-    if(cycles < 500) {
-        window.requestAnimationFrame(loop);
-        times.push(Date.now() - timestamp);
+    if (cycles < 1000) {
+        setTimeout(() => window.requestAnimationFrame(loop), 40);
+        times.push(Date.now() - start);
         cycles++;
     } else {
         const average = times.reduce((sum, val) => sum + val, 0) / times.length;

@@ -93,14 +93,14 @@ class FileGraph {
         };
     }
 
-    update(timeDeltaInSec) {
+    update(timeDeltaInMs) {
         const nodes = _.values(this.nodes);
         nodes.forEach(node => {
-            node.update(timeDeltaInSec, nodes, this.center);
+            node.update(timeDeltaInMs, nodes, this.center);
         });
 
         this.edges.forEach(edge => {
-            edge.update();
+            edge.update(timeDeltaInMs);
         });
     }
 
