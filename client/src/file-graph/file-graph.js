@@ -2,11 +2,13 @@ const $ = require('jquery');
 
 const Node = require('./node');
 const Edge = require('./edge');
+const { File } = require('file-graph-shared');
 
 class FileGraph {
-    constructor(width, height) {
+    constructor(width, height, app) {
         this.width = width;
         this.height = height;
+        this.app = app;
 
         this.nodes = {};
         this.edges = [];
@@ -39,8 +41,8 @@ class FileGraph {
         this.el.appendChild(this.centerCircle);
     }
 
-    addNode(id, title) {
-        const node = new Node(id, title);
+    addNode(file) {
+        const node = new Node(this, file.getId(), file);
         this.nodeGroup.appendChild(node.el);
         this.nodes[node.id] = node;
 
@@ -74,7 +76,7 @@ class FileGraph {
     loadDataAsync() {
         return $.get('/graph')
             .done((graph) => {
-                graph.nodes.forEach(n => this.addNode(n.id, n.label));
+                graph.nodes.forEach(n => this.addNode(File.fromJSON(n)));
 
                 graph.edges.forEach(edge => {
                     const node1 = this.nodes[edge.leftNode];
@@ -99,6 +101,10 @@ class FileGraph {
         this.edges.forEach(edge => {
             edge.update();
         });
+    }
+
+    onNodeSelected(node) {
+        this.app.onNodeSelected(node);
     }
 }
 

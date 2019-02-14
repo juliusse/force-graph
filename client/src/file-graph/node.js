@@ -1,35 +1,42 @@
+const $ = require('jquery');
+
 class Node {
-    constructor(id, label, pos = {}) {
+    constructor(fileGraph, id, file, pos = {}) {
+        this.fileGraph = fileGraph;
         this.id = id;
-        this.x = pos.x || Math.random() * 500;
-        this.y = pos.y || Math.random() * 500;
+        this.x = pos.x || Math.random() * fileGraph.width;
+        this.y = pos.y || Math.random() * fileGraph.height;
         this.xDelta = 0;
         this.yDelta = 0;
-        this.label = label;
+        this.file = file;
         this.edges = [];
 
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.el.classList.add('node');
 
         this.nodeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        this.nodeSvg.setAttribute('r', '10');
-        this.nodeSvg.setAttribute('fill', '#ff0000');
-        this.nodeSvg.setAttribute('stroke', 'black');
-        this.nodeSvg.setAttribute('strokeWidth', '1px');
+        this.nodeSvg.setAttribute('r', '4');
+        this.nodeSvg.setAttribute('fill', 'black');
+        // this.nodeSvg.setAttribute('stroke', 'black');
+        // this.nodeSvg.setAttribute('strokeWidth', '1px');
         this.nodeSvg.setAttribute('cx', this.x);
         this.nodeSvg.setAttribute('cy', this.y);
         this.el.appendChild(this.nodeSvg);
 
         this.textSvg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        this.textSvg.textContent = this.label;
+        this.textSvg.textContent = this.file.name;
         // this.textSvg.setAttribute('dy', '-5');
 
         this.textSvg.setAttribute('fill', 'black');
+        this.textSvg.setAttribute('font-weight', 'bold');
         this.textSvg.setAttribute('x', this.x - 15);
-        this.textSvg.setAttribute('y', this.y + 6);
+        this.textSvg.setAttribute('y', this.y - 5);
         this.el.appendChild(this.textSvg);
 
 
+        $(this.el).on('click',() => {
+            fileGraph.onNodeSelected(this);
+        });
     }
 
     get position() {

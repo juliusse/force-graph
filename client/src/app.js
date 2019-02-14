@@ -3,13 +3,49 @@ const $ = require('jquery');
 const graph = require('./miserables');
 
 const FileGraph = require('./file-graph/file-graph');
+const FileInfo = require('./file-graph/file-info');
 const appContainer = document.querySelector('#file-graph-app');
 
 require('./app.less');
+class App {
+    constructor(element) {
+        this.fileGraph = null;
+        this.selectedNode = null;
+        this.displayedFileInfo = null;
 
+        this.el = element;
+        this.el.classList.add('file-graph-app');
+        this.fileInfoContainer = document.createElement('div');
+        this.fileInfoContainer.classList.add('file-info-container');
 
-const fileGraph = new FileGraph(800,500);
-// fileGraph.addNode('first','first');
+        this.graphContainer = document.createElement('div');
+        this.graphContainer.classList.add('file-graph-container');
+
+        this.el.appendChild(this.fileInfoContainer);
+        this.el.appendChild(this.graphContainer);
+    }
+
+    start() {
+        this.fileGraph = new FileGraph(500,500, this);
+        this.fileGraph.loadDataAsync()
+            .then(() => this.graphContainer.appendChild(this.fileGraph.el));
+    }
+
+    onNodeSelected(node) {
+        if(this.displayedFileInfo !== null) {
+            this.fileInfoContainer.removeChild(this.displayedFileInfo.el);
+            this.displayedFileInfo = null;
+        }
+
+        this.selectedNode = node;
+        this.displayedFileInfo = new FileInfo(node.file);
+        this.fileInfoContainer.appendChild(this.displayedFileInfo.el);
+        console.log(node);
+    }
+}
+
+const app = new App(appContainer);
+app.start();
 
 
 // $(masterSvg).on('click', () => {
@@ -48,9 +84,6 @@ const fileGraph = new FileGraph(800,500);
 //
 //     edges.push(edge);
 // });
-
-appContainer.appendChild(fileGraph.el);
-fileGraph.loadDataAsync();
 
 let lastRender = Date.now();
 

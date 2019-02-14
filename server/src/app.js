@@ -2,7 +2,7 @@ var express = require('express');
 var app = express();
 const path = require('path');
 const fs = require('fs').promises;
-const File = require('./file');
+const { File } = require('file-graph-shared');
 
 const baseDir = process.argv[2];
 const dataFileName = 'filegraph.json';
@@ -47,18 +47,16 @@ app.use('/js', express.static('../client/bin'));
 express.static('./entrypoints');
 
 app.get('/graph', (req, res) => {
+    const file1 = new File('folder/','name.png', ['house', 'boat']);
+    const file2 = new File('another_folder/','image.jpg', ['house', 'horse']);
+
     res.json({
-        nodes: [{
-            id: 'someId',
-            label: 'label1'
-        },
-            {
-                id: 'someId2',
-                label: 'label2'
-            }
+        nodes: [
+            file1,
+            file2,
         ],
         edges: [
-            { leftNode: 'someId', rightNode: 'someId2', tags: ['city', 'house'] }
+            { leftNode: file1.getId(), rightNode: file2.getId() }
         ]
     });
 });
