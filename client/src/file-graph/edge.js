@@ -2,6 +2,7 @@ const { Utils, ListenableObject } = require('file-graph-shared');
 const { removeElement } = Utils;
 
 require('./edge.less');
+
 class Edge extends ListenableObject {
     constructor(fileGraph, leftNode, rightNode, { path = null, tags = [] } = {}, draw = true) {
         super();
@@ -31,10 +32,10 @@ class Edge extends ListenableObject {
         this.leftNode.edges.push(this);
         this.rightNode.edges.push(this);
 
-        this.leftNode.on('change:selected', this.onNodeSelectionChanged.bind(this));
-        this.rightNode.on('change:selected', this.onNodeSelectionChanged.bind(this));
-        this.leftNode.on('change:highlighted', this.onNodeSelectionChanged.bind(this));
-        this.rightNode.on('change:highlighted', this.onNodeSelectionChanged.bind(this));
+        this.listenTo(this.leftNode,'change:selected', this.onNodeSelectionChanged);
+        this.listenTo(this.rightNode,'change:selected', this.onNodeSelectionChanged);
+        this.listenTo(this.leftNode,'change:highlighted', this.onNodeSelectionChanged);
+        this.listenTo(this.rightNode,'change:highlighted', this.onNodeSelectionChanged);
 
         this.state.on('change:hasHighlightedNode', this.updateCssClass.bind(this));
         this.state.on('change:hasSelectedNode', this.updateCssClass.bind(this));
@@ -42,6 +43,7 @@ class Edge extends ListenableObject {
         this.state.on('change:hasHighlightedNode', this.updateVisibility.bind(this));
         this.state.on('change:hasSelectedNode', this.updateVisibility.bind(this));
 
+        this.onNodeSelectionChanged();
         this.updateVisibility();
     }
 
@@ -50,7 +52,7 @@ class Edge extends ListenableObject {
     }
 
     updateVisibility() {
-        if(!this.config.drawEdges) {
+        if (!this.config.drawEdges) {
             return;
         }
         const isVisible = this.tags.length > 0 ||
@@ -61,18 +63,15 @@ class Edge extends ListenableObject {
 
     addTag(tag) {
         this.tags.push(tag);
-        if (this.tags.length === 1) {
-            this.fileGraph.onEdgeShown(this);
-        }
+        this.updateVisibility();
     }
 
     removeTag(tag) {
         this.tags = removeElement(this.tags, tag);
+        this.updateVisibility();
 
-        if (this.tags.length === 0) {
-            this.fileGraph.onEdgeHidden(this);
-        }
         if (this.tags.length === 0 && this.path == null) {
+            this.removeListeners();
             this.fileGraph.removeEdge(this.leftNode.id, this.rightNode.id);
         }
     }
@@ -123,6 +122,25 @@ class Edge extends ListenableObject {
             this.timeSinceLastUpdate = 0;
         }
     }
+
+    removeListeners() {
+        this.stopListening(this.leftNode, 'change:selected');
+        this.stopListening(this.rightNode, 'change:selected');
+        this.stopListening(this.leftNode, 'change:highlighted');
+        this.stopListening(this.rightNode, 'change:highlighted');
+    }
 }
+
+class test {
+    func() {
+
+    }
+}
+
+window.a = new test();
+window.b = new test();
+
+window.c = a.func.bind(a);
+window.d = b.func.bind(b);
 
 module.exports = Edge;

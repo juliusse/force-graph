@@ -82,18 +82,18 @@ class DataModel {
 
         const removedTags = [];
         const addedTags = [];
-        sendFile.tags.forEach(tag => {
-            if (tag.trim() === '') {
-                return;
-            }
+        const newTags = sendFile.tags.indexOf('') !== -1 ?
+            removeElement(sendFile.tags, '') :
+            sendFile.tags;
 
+        newTags.forEach(tag => {
             if (file.tags.indexOf(tag) === -1) {
                 addedTags.push(tag);
             }
         });
 
         file.tags.forEach(tag => {
-            if (sendFile.tags.indexOf(tag) === -1) {
+            if (newTags.indexOf(tag) === -1) {
                 removedTags.push(tag);
             }
         });
@@ -113,10 +113,10 @@ class DataModel {
                 if (edge.tags.length === 0 && edge.path == null) {
                     delete this._edges[edgeId];
                 }
-                tagsToRemove.push({ otherFile: otherFile.getId(), tag});
+                tagsToRemove.push({ otherFile: otherFile.getId(), tag });
             });
         });
-        file.tags = sendFile.tags;
+        file.tags = newTags;
 
 
         const tagsToAdd = [];
@@ -137,7 +137,7 @@ class DataModel {
 
                 const edge = this._edges[edgeId];
                 edge.tags.push(tag);
-                tagsToAdd.push({ otherFile: rightFile.getId(), tag});
+                tagsToAdd.push({ otherFile: rightFile.getId(), tag });
             });
             this.fileTagMap[tag].push(file);
         });

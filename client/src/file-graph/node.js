@@ -22,7 +22,6 @@ class Node extends ListenableObject {
         this.set('highlighted', false);
 
 
-        file.addListener(this);
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
         this.el.classList.add('file-graph-node');
@@ -50,6 +49,7 @@ class Node extends ListenableObject {
 
         this.on('change:highlighted', this.updateCssClass.bind(this));
         this.on('change:selected', this.updateCssClass.bind(this));
+        this.file.on('updated', this.onFileUpdate.bind(this));
     }
 
     updateCssClass() {
@@ -181,7 +181,7 @@ class Node extends ListenableObject {
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
     }
 
-    onFileUpdate({ tagsToAdd, tagsToRemove }) {
+    onFileUpdate(file, { tagsToAdd, tagsToRemove }) {
         tagsToAdd.forEach(({ otherFile, tag }) => {
             const edge = this.getEdgeTo(otherFile) ||
                 this.fileGraph.addEdge(this.id, otherFile);

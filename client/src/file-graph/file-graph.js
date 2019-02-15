@@ -50,7 +50,7 @@ class FileGraph extends ListenableObject {
         this.nodes[node.id] = node;
 
         node.on('change:selected', (node, isSelected) => {
-            if(isSelected) {
+            if (isSelected) {
                 this.emitEvent('nodeSelected', { node });
             }
         });
@@ -64,11 +64,13 @@ class FileGraph extends ListenableObject {
             this.edgeGroup.appendChild(edge.el);
         }
 
-        edge.on('change:isVisible', (edge, isVisible) => {
+        this.listenTo(edge, 'change:isVisible', (edge, isVisible) => {
             isVisible ?
                 this.edgeGroup.appendChild(edge.el) :
                 this.edgeGroup.removeChild(edge.el);
         });
+
+        return edge;
     }
 
     removeEdge(nodeId1, nodeId2) {
