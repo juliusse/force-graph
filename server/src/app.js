@@ -3,6 +3,8 @@ const app = express();
 const path = require('path');
 const fs = require('fs').promises;
 const _ = require('lodash');
+
+const configuration = require('./config');
 const DataModel = require('./data-model');
 const { File } = require('file-graph-shared');
 const baseDir = process.argv[2];
@@ -10,19 +12,23 @@ const dataFileName = 'filegraph.json';
 const dataFile = path.join(baseDir, dataFileName);
 
 const dataModel = new DataModel();
+let config = null;
 const startPromises = [];
 
 function loadFile() {
     return fs.readFile(dataFile, 'utf8')
         .catch(() => JSON.stringify({
             version: 1,
-            files: []
+            files: [],
+            config: configuration.getDefaultConfig(),
         }));
 }
 
 function parseFileContent(content) {
-    const filesJson = JSON.parse(content).files;
-    filesJson.forEach(f => dataModel.addFile(File.fromJSON(f)));
+    const { files, config: configFromFile } = JSON.parse(content);
+    config = configFromFile;
+    config = _.defaultsDeep(config, configuration.getDefaultConfig());
+    files.forEach(f => dataModel.addFile(File.fromJSON(f)));
 }
 
 function readDirectory(baseDirectory, subDir = '') {
@@ -60,7 +66,8 @@ startPromises.push(loadFile()
 function saveDataAsync() {
     const toWrite = {
         version: 1,
-        files: _.values(dataModel.files)
+        files: _.values(dataModel.files),
+        config
     };
 
     return fs.writeFile(dataFile, JSON.stringify(toWrite), 'utf8');
@@ -85,12 +92,23 @@ app.get('/graph', (req, res) => {
     });
 });
 
+app.get('/config', (req, res) => {
+    res.json({
+        config: config.client
+    });
+});
+
 app.post('/file', (req, res) => {
     const sendFile = File.fromJSON(JSON.parse(req.query.file));
     const changes = dataModel.updateFile(sendFile);
 
     saveDataAsync()
         .then(() => res.send(changes));
+});
+
+app.post('/open/folder', (req, res) => {
+    const subFolder = req.query.folder;
+    `explorer "${path.join(baseDir, subFolder)}"`;
 });
 
 

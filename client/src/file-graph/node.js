@@ -1,8 +1,12 @@
 const $ = require('jquery');
+const { ListenableObject } = require('file-graph-shared');
 
-class Node {
+require('./node.less');
+class Node extends ListenableObject {
     constructor(fileGraph, id, file, pos = {}) {
+        super();
         this.fileGraph = fileGraph;
+        this.config = this.fileGraph.config;
         this.id = id;
         this.x = pos.x || Math.random() * fileGraph.width;
         this.y = pos.y || Math.random() * fileGraph.height;
@@ -14,28 +18,50 @@ class Node {
             y: 0
         };
 
+        this.set('selected', false);
+        this.set('highlighted', false);
+
+
         file.addListener(this);
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        this.el.classList.add('node');
+        this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
+        this.el.classList.add('file-graph-node');
 
         this.nodeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        this.nodeSvg.setAttribute('r', '4');
-        this.nodeSvg.setAttribute('fill', 'black');
         this.el.appendChild(this.nodeSvg);
+
+        this.titleSvg = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        this.titleSvg.textContent = this.id;
+        this.el.appendChild(this.titleSvg);
 
         this.textSvg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         this.textSvg.textContent = this.file.name;
 
-        this.textSvg.setAttribute('fill', 'black');
-        this.textSvg.setAttribute('font-size', '9px');
         this.textSvg.setAttribute('x', -15);
         this.textSvg.setAttribute('y', -5);
         this.el.appendChild(this.textSvg);
 
 
-        $(this.el).on('click', () => {
-            fileGraph.onNodeSelected(this);
-        });
+        $(this.el).on('click', () => this.set('selected', true));
+
+        $(this.el).on('mouseover', () => this.set('highlighted', true));
+        $(this.el).on('mouseout', () => this.set('highlighted', false));
+
+
+        this.on('change:highlighted', this.updateCssClass.bind(this));
+        this.on('change:selected', this.updateCssClass.bind(this));
+    }
+
+    updateCssClass() {
+        const selected = this.get('selected');
+        const highlighted = this.get('highlighted');
+
+        this.el.classList.toggle('hover', !selected && highlighted);
+        this.el.classList.toggle('selected', selected);
+    }
+
+    deselect() {
+        this.set('selected', false);
     }
 
     get position() {
@@ -66,9 +92,9 @@ class Node {
         if (this.edges.length === 0) {
             return { x: 0, y: 0 };
         }
-        const maxForce = 250;
-        const maxDistance = 500;
-        const desiredDistance = 20;
+        const maxForce = this.config.forces.edge.maxForce;
+        const maxDistance = this.config.forces.edge.maxDistance;
+        const desiredDistance = this.config.forces.edge.desiredDistance;
 
         const forces = this.edges.map(edge => {
             const distanceInfo = edge.getDistanceInfo(this);
@@ -96,8 +122,9 @@ class Node {
     }
 
     calculateRepellingForce(nodes) {
-        const desiredDistance = 200;
-        const maxForce = 1000;
+        const desiredDistance = this.config.forces.repellingNodes.desiredDistance;
+        const maxForce = this.config.forces.repellingNodes.maxForce;
+        const forceFactor = this.config.forces.types.repellingNodes;
 
         const aggregatedForces = nodes.reduce((result, node) => {
             if (node === this) {
@@ -121,7 +148,7 @@ class Node {
 
             const distanceForStrength = desiredDistance - distanceInfo.distance;
             const forceStrength = distanceForStrength <= 0 ? 0 :
-                distanceForStrength / desiredDistance * maxForce;
+                distanceForStrength / desiredDistance * maxForce * forceFactor;
 
             result.forceSum.x += distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength;
             result.forceSum.y += distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength;
@@ -136,9 +163,8 @@ class Node {
 
     update(timeDeltaInMs, nodes, center) {
         this.timeSinceLastForceUpdate += timeDeltaInMs;
-        // console.log(this.timeSinceLastForceUpdate)
-        if (this.timeSinceLastForceUpdate > 250) {
-            const centerDelta = { x: 0, y: 0 };//this.calculateCenterDelta(timeDelta, center);
+        if (this.timeSinceLastForceUpdate > this.config.nodeForceUpdateAfterInMs) {
+            const centerDelta = { x: 0, y: 0 };
             const edgesDelta = this.calculateEdgeForce();
             const repellingDelta = this.calculateRepellingForce(nodes);
 
@@ -155,11 +181,20 @@ class Node {
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
     }
 
-    onFileUpdate({ edgesToAdd, edgesToRemove }) {
-        console.log(arguments);
-        edgesToAdd.forEach((edge) => this.fileGraph.addEdge(edge.leftNode, edge.rightNode,
-            { tags: edge.tags }));
-        edgesToRemove.forEach((edge) => this.fileGraph.removeEdge(this.file.getId(), edge));
+    onFileUpdate({ tagsToAdd, tagsToRemove }) {
+        tagsToAdd.forEach(({ otherFile, tag }) => {
+            const edge = this.getEdgeTo(otherFile) ||
+                this.fileGraph.addEdge(this.id, otherFile);
+
+            edge.addTag(tag);
+        });
+
+        tagsToRemove.forEach(({ otherFile, tag }) => this.getEdgeTo(otherFile).removeTag(tag));
+    }
+
+    getEdgeTo(nodeId) {
+        return this.edges.find(edge =>
+            edge.leftNode.id === nodeId || edge.rightNode.id === nodeId);
     }
 }
 

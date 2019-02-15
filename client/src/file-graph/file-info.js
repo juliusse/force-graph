@@ -18,12 +18,14 @@ const template = `
 
 const $ = require('jquery');
 const EditableText = require('../elements/editable-text');
+const { ListenableObject } = require('file-graph-shared');
+
 
 require('./file-info.less');
-class FileInfo {
-    constructor(file, listener) {
+class FileInfo extends ListenableObject {
+    constructor(file) {
+        super();
         this.file = file;
-        this.listener = listener;
 
         this.el = document.createElement('div');
         this.el.classList.add('file-info');
@@ -37,7 +39,8 @@ class FileInfo {
         this.el.querySelector('.name').innerText = file.name;
         this.el.querySelector('.tags').appendChild(this.tagsField.el);
 
-        $(this.el.querySelector('.btn-close')).on('click', listener.onFileInfoClose);
+        $(this.el.querySelector('.btn-close'))
+            .on('click', () => this.emitEvent('clicked:close'));
     }
 
     onTagsChanged(editableText, text) {

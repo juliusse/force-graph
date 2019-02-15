@@ -24,32 +24,50 @@ class App {
         this.el.appendChild(this.graphContainer);
     }
 
+    loadConfigAsync() {
+        return new Promise((res) => {
+            $.get('/config')
+                .done(({ config }) => {
+                    this.config = config;
+                    window.config = config;
+                    res(config);
+                });
+        });
+    }
+
     start() {
         const width = 2500;
         const height = 2500;
-        this.fileGraph = new FileGraph(width, height, this);
-        this.fileGraph.loadDataAsync()
+
+        return this.loadConfigAsync()
+            .then(config => {
+                this.fileGraph = new FileGraph(width, height, config, this);
+
+                this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
+                return this.fileGraph.loadDataAsync();
+            })
             .then(() => this.graphContainer.appendChild(this.fileGraph.el))
             .then(() => this.graphContainer.scrollTo(width / 2 - 400, height / 2 - 250));
-
     }
 
     deselectNode() {
         if (this.displayedFileInfo !== null) {
             this.fileInfoContainer.removeChild(this.displayedFileInfo.el);
+            this.selectedNode.deselect();
+            this.selectedNode = null;
             this.displayedFileInfo = null;
         }
     }
 
-    onNodeSelected(node) {
+    onNodeSelected(graph, { node }) {
         this.deselectNode();
 
         this.selectedNode = node;
-        this.displayedFileInfo = new FileInfo(node.file,
-            { onFileInfoClose: this.deselectNode.bind(this) });
-        this.fileInfoContainer.appendChild(this.displayedFileInfo.el);
+        this.displayedFileInfo = new FileInfo(node.file);
+        this.displayedFileInfo.on('clicked:close', this.deselectNode.bind(this));
 
-        $(this.displayedFileInfo.el).on('blur', this.deselectNode);
+
+        this.fileInfoContainer.appendChild(this.displayedFileInfo.el);
     }
 
     update(timeDeltaInSec) {
@@ -59,7 +77,7 @@ class App {
 }
 
 const app = new App(appContainer);
-app.start();
+
 
 let lastRender = null;
 
@@ -87,4 +105,7 @@ function loop(timestamp) {
     }
 }
 
-window.requestAnimationFrame(loop);
+app.start()
+    .then(() => {
+        window.requestAnimationFrame(loop);
+    });

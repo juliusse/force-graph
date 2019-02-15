@@ -1,0 +1,34 @@
+.file-graph-node {
+  cursor: pointer;
+
+  circle {
+    fill: black;
+    r: 5;
+  }
+
+  text {
+    fill: black;
+    font-size: 9px;
+  }
+
+  &.hover {
+    circle {
+      fill: #38cbe9;
+    }
+
+    text {
+      font-size: 14px;
+    }
+  }
+
+  &.selected {
+    circle {
+      fill: #2856e9;
+    }
+
+    text {
+      font-size: 14px;
+      font-weight: bold;
+    }
+  }
+}

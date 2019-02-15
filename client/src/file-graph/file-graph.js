@@ -3,13 +3,15 @@ const _ = require('lodash');
 
 const Node = require('./node');
 const Edge = require('./edge');
-const { File, Utils } = require('file-graph-shared');
+const { File, Utils, ListenableObject } = require('file-graph-shared');
 const { removeElement } = Utils;
 
-class FileGraph {
-    constructor(width, height, app) {
+class FileGraph extends ListenableObject {
+    constructor(width, height, config, app) {
+        super();
         this.width = width;
         this.height = height;
+        this._config = config;
         this.app = app;
 
         this.nodes = {};
@@ -47,15 +49,26 @@ class FileGraph {
         this.nodeGroup.appendChild(node.el);
         this.nodes[node.id] = node;
 
+        node.on('change:selected', (node, isSelected) => {
+            if(isSelected) {
+                this.emitEvent('nodeSelected', { node });
+            }
+        });
         return node;
     }
 
-    addEdge(nodeId1, nodeId2, {tags = [], path = null} = {}) {
-        const edge = new Edge(this.nodes[nodeId1], this.nodes[nodeId2], { tags, path });
+    addEdge(nodeId1, nodeId2, { tags = [], path = null } = {}) {
+        const edge = new Edge(this, this.nodes[nodeId1], this.nodes[nodeId2], { tags, path });
         this.edges.push(edge);
-        // this.edgeGroup.appendChild(edge.el);
+        if (edge.isVisible) {
+            this.edgeGroup.appendChild(edge.el);
+        }
 
-        return edge;
+        edge.on('change:isVisible', (edge, isVisible) => {
+            isVisible ?
+                this.edgeGroup.appendChild(edge.el) :
+                this.edgeGroup.removeChild(edge.el);
+        });
     }
 
     removeEdge(nodeId1, nodeId2) {
@@ -65,7 +78,9 @@ class FileGraph {
                 (edge.rightNode.id === nodeId1 && edge.leftNode.id === nodeId2);
         });
 
-        // this.edgeGroup.removeChild(edge.el);
+        if (edge.isVisible) {
+            this.edgeGroup.removeChild(edge.el);
+        }
         this.edges = removeElement(this.edges, edge);
     }
 
@@ -73,7 +88,7 @@ class FileGraph {
         return $.get('/graph')
             .done((graph) => {
                 graph.nodes.forEach(n => this.addNode(File.fromJSON(n)));
-                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode,{
+                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode, {
                     tags: e.tags, path: e.path
                 }));
             });
@@ -86,6 +101,10 @@ class FileGraph {
         };
     }
 
+    get config() {
+        return this._config;
+    }
+
     update(timeDeltaInMs) {
         const nodes = _.values(this.nodes);
         _.forEach(nodes, node => {
@@ -95,10 +114,6 @@ class FileGraph {
         _.forEach(this.edges, edge => {
             edge.update(timeDeltaInMs);
         });
-    }
-
-    onNodeSelected(node) {
-        this.app.onNodeSelected(node);
     }
 }
 

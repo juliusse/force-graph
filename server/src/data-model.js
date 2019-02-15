@@ -29,7 +29,7 @@ class DataModel {
         }
 
         // testing
-        if (this.files.length >= 100) {
+        if (this.files.length >= 50) {
             return;
         }
 
@@ -77,75 +77,74 @@ class DataModel {
 
     }
 
-    updateFile(file) {
-        const oldFile = this._files[file.getId()];
+    updateFile(sendFile) {
+        const file = this._files[sendFile.getId()];
 
         const removedTags = [];
         const addedTags = [];
-        file.tags.forEach(tag => {
-            if (tag === '') {
+        sendFile.tags.forEach(tag => {
+            if (tag.trim() === '') {
                 return;
             }
 
-            if (oldFile.tags.indexOf(tag) === -1) {
+            if (file.tags.indexOf(tag) === -1) {
                 addedTags.push(tag);
             }
         });
 
-        oldFile.tags.forEach(tag => {
-            if (file.tags.indexOf(tag) === -1) {
+        file.tags.forEach(tag => {
+            if (sendFile.tags.indexOf(tag) === -1) {
                 removedTags.push(tag);
             }
         });
 
-        const edgesToRemove = [];
+        const tagsToRemove = [];
         removedTags.forEach(tag => {
             this.fileTagMap[tag] =
-                removeElement(this.fileTagMap[tag], oldFile);
+                removeElement(this.fileTagMap[tag], file);
 
             this.fileTagMap[tag].forEach(otherFile => {
 
-                const edgeId = generateEdgeId(oldFile, otherFile);
+                const edgeId = generateEdgeId(file, otherFile);
                 const edge = this._edges[edgeId];
 
                 edge.tags = removeElement(edge.tags, tag);
 
                 if (edge.tags.length === 0 && edge.path == null) {
                     delete this._edges[edgeId];
-                    edgesToRemove.push(otherFile.getId());
                 }
+                tagsToRemove.push({ otherFile: otherFile.getId(), tag});
             });
         });
-        oldFile.tags = file.tags;
+        file.tags = sendFile.tags;
 
 
-        const edgesToAdd = [];
+        const tagsToAdd = [];
         addedTags.forEach(tag => {
             if (this.fileTagMap[tag] == null) {
                 this.fileTagMap[tag] = [];
             }
 
             this.fileTagMap[tag].forEach(rightFile => {
-                const edgeId = generateEdgeId(file, rightFile);
+                const edgeId = generateEdgeId(sendFile, rightFile);
                 if (this._edges[edgeId] == null) {
                     this._edges[edgeId] = {
-                        leftNode: file.getId(),
+                        leftNode: sendFile.getId(),
                         rightNode: rightFile.getId(),
-                        tags: [tag]
+                        tags: []
                     };
-                    edgesToAdd.push(this._edges[edgeId]);
-                    return;
                 }
 
                 const edge = this._edges[edgeId];
                 edge.tags.push(tag);
+                tagsToAdd.push({ otherFile: rightFile.getId(), tag});
             });
-            this.fileTagMap[tag].push(oldFile);
+            this.fileTagMap[tag].push(file);
         });
 
         return {
-            edgesToRemove,
-            edgesToAdd
+            tagsToAdd,
+            tagsToRemove
         };
     }
 }
