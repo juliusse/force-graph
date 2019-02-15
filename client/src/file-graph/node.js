@@ -16,6 +16,7 @@ class Node {
             y: 0
         };
 
+        file.addListener(this);
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.el.classList.add('node');
 
@@ -34,13 +35,13 @@ class Node {
 
         this.textSvg.setAttribute('fill', 'black');
         // this.textSvg.setAttribute('font-weight', 'bold');
-        this.textSvg.setAttribute('font-size','9px')
+        this.textSvg.setAttribute('font-size', '9px');
         this.textSvg.setAttribute('x', this.x - 15);
         this.textSvg.setAttribute('y', this.y - 5);
         this.el.appendChild(this.textSvg);
 
 
-        $(this.el).on('click',() => {
+        $(this.el).on('click', () => {
             fileGraph.onNodeSelected(this);
         });
     }
@@ -143,7 +144,7 @@ class Node {
     update(timeDeltaInMs, nodes, center) {
         this.timeSinceLastForceUpdate += timeDeltaInMs;
         // console.log(this.timeSinceLastForceUpdate)
-        if(this.timeSinceLastForceUpdate > 250) {
+        if (this.timeSinceLastForceUpdate > 250) {
             const centerDelta = { x: 0, y: 0 };//this.calculateCenterDelta(timeDelta, center);
             const edgesDelta = this.calculateEdgeForce();
             const repellingDelta = this.calculateRepellingForce(nodes);
@@ -159,6 +160,12 @@ class Node {
         this.xDelta = this.xDelta + this.currentForce.x * timeDeltaInMs / 1000;
         this.yDelta = this.yDelta + this.currentForce.y * timeDeltaInMs / 1000;
         this.el.setAttribute('transform', `translate(${this.xDelta},${this.yDelta})`);
+    }
+
+    onFileUpdate({ edgesToAdd, edgesToRemove }) {
+        console.log(arguments);
+        edgesToAdd.forEach((edge) => this.fileGraph.addEdge(edge.leftNode, edge.rightNode));
+        edgesToRemove.forEach((edge) => this.fileGraph.removeEdge(this.file.getId(), edge));
     }
 }
 

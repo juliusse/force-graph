@@ -3,7 +3,8 @@ const _ = require('lodash');
 
 const Node = require('./node');
 const Edge = require('./edge');
-const { File } = require('file-graph-shared');
+const { File, Utils } = require('file-graph-shared');
+const { removeElement } = Utils;
 
 class FileGraph {
     constructor(width, height, app) {
@@ -25,7 +26,6 @@ class FileGraph {
         this.el.appendChild(this.nodeGroup);
 
         this.addCenterCircle();
-        this.addEventListeners();
     }
 
     addCenterCircle() {
@@ -50,40 +50,30 @@ class FileGraph {
         return node;
     }
 
-    addEdge(node1, node2) {
-        const edge = new Edge(node1, node2);
+    addEdge(nodeId1, nodeId2) {
+        const edge = new Edge(this.nodes[nodeId1], this.nodes[nodeId2]);
         this.edges.push(edge);
         this.edgeGroup.appendChild(edge.el);
 
         return edge;
     }
 
-    addEventListeners() {
-        $(this.el).on('drop', event => {
-            event.preventDefault();
-            const edgeToNode = _.values(this.nodes)[_.random(0, _.values(this.nodes).length - 1)];
+    removeEdge(nodeId1, nodeId2) {
+        const edge = this.edges.find(edge => {
 
-            const name = event.originalEvent.dataTransfer.items[0].getAsFile().name;
-            const node = this.addNode(Math.random, name);
-
-            this.addEdge(node, edgeToNode);
+            return (edge.leftNode.id === nodeId1 && edge.rightNode.id === nodeId2) ||
+                (edge.rightNode.id === nodeId1 && edge.leftNode.id === nodeId2);
         });
 
-        $(this.el).on('dragover', (event) => {
-            event.preventDefault();
-        });
+        this.edgeGroup.removeChild(edge.el);
+        this.edges = removeElement(this.edges, edge);
     }
 
     loadDataAsync() {
         return $.get('/graph')
             .done((graph) => {
                 graph.nodes.forEach(n => this.addNode(File.fromJSON(n)));
-
-                graph.edges.forEach(edge => {
-                    const node1 = this.nodes[edge.leftNode];
-                    const node2 = this.nodes[edge.rightNode];
-                    this.addEdge(node1, node2);
-                });
+                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode));
             });
     }
 

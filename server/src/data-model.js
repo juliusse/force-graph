@@ -1,21 +1,11 @@
 const _ = require('lodash');
+const { removeElement } = require('file-graph-shared').Utils;
 
 function generateEdgeId(file1, file2) {
     const fileIds = [file1.getId(), file2.getId()];
 
     return fileIds.sort().join('-');
 }
-
-function removeElement(array, element) {
-    const indexOfElement = array.indexOf(element);
-
-    if (indexOfElement === -1) {
-        throw new Error('element must be part of array!');
-    }
-    return array.slice(0, indexOfElement)
-        .concat(array.slice(indexOfElement + 1, array.length));
-}
-
 
 class DataModel {
     constructor() {
@@ -121,7 +111,7 @@ class DataModel {
                 edge.tags = removeElement(edge.tags, tag);
 
                 if (edge.tags.length === 0 && edge.path == null) {
-                    this._edges[edgeId] = undefined;
+                    delete this._edges[edgeId];
                     edgesToRemove.push(otherFile.getId());
                 }
             });
@@ -150,7 +140,7 @@ class DataModel {
                 const edge = this._edges[edgeId];
                 edge.tags.push(tag);
             });
-            this.fileTagMap[tag].push(file);
+            this.fileTagMap[tag].push(oldFile);
         });
 
         return {
