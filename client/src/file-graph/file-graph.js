@@ -50,10 +50,10 @@ class FileGraph {
         return node;
     }
 
-    addEdge(nodeId1, nodeId2) {
-        const edge = new Edge(this.nodes[nodeId1], this.nodes[nodeId2]);
+    addEdge(nodeId1, nodeId2, {tags = [], path = null} = {}) {
+        const edge = new Edge(this.nodes[nodeId1], this.nodes[nodeId2], { tags, path });
         this.edges.push(edge);
-        this.edgeGroup.appendChild(edge.el);
+        // this.edgeGroup.appendChild(edge.el);
 
         return edge;
     }
@@ -65,7 +65,7 @@ class FileGraph {
                 (edge.rightNode.id === nodeId1 && edge.leftNode.id === nodeId2);
         });
 
-        this.edgeGroup.removeChild(edge.el);
+        // this.edgeGroup.removeChild(edge.el);
         this.edges = removeElement(this.edges, edge);
     }
 
@@ -73,7 +73,9 @@ class FileGraph {
         return $.get('/graph')
             .done((graph) => {
                 graph.nodes.forEach(n => this.addNode(File.fromJSON(n)));
-                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode));
+                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode,{
+                    tags: e.tags, path: e.path
+                }));
             });
     }
 
@@ -86,11 +88,11 @@ class FileGraph {
 
     update(timeDeltaInMs) {
         const nodes = _.values(this.nodes);
-        nodes.forEach(node => {
+        _.forEach(nodes, node => {
             node.update(timeDeltaInMs, nodes, this.center);
         });
 
-        this.edges.forEach(edge => {
+        _.forEach(this.edges, edge => {
             edge.update(timeDeltaInMs);
         });
     }

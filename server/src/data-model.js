@@ -29,7 +29,7 @@ class DataModel {
         }
 
         // testing
-        if (this.files.length >= 100) {
+        if (this.files.length >= 800) {
             return;
         }
 

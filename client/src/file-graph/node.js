@@ -76,14 +76,14 @@ class Node {
         }
         const maxForce = 250;
         const maxDistance = 500;
-        const desiredDistance = 50;
+        const desiredDistance = 20;
 
         const forces = this.edges.map(edge => {
             const distanceInfo = edge.getDistanceInfo(this);
             const distanceForStrength = distanceInfo.distance - desiredDistance;
             const forceStrength = distanceForStrength <= 0 ? 0 :
-                distanceForStrength >= maxDistance ? maxForce :
-                    distanceForStrength / maxDistance * maxForce;
+                distanceForStrength >= maxDistance ? maxForce * edge.getForce() :
+                    distanceForStrength / maxDistance * maxForce * edge.getForce();
 
             return {
                 x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
@@ -104,7 +104,7 @@ class Node {
     }
 
     calculateRepellingForce(nodes) {
-        const desiredDistance = 150;
+        const desiredDistance = 200;
         const maxForce = 1000;
 
         const forces = nodes.map(node => {
@@ -164,7 +164,8 @@ class Node {
 
     onFileUpdate({ edgesToAdd, edgesToRemove }) {
         console.log(arguments);
-        edgesToAdd.forEach((edge) => this.fileGraph.addEdge(edge.leftNode, edge.rightNode));
+        edgesToAdd.forEach((edge) => this.fileGraph.addEdge(edge.leftNode, edge.rightNode,
+            { tags: edge.tags }));
         edgesToRemove.forEach((edge) => this.fileGraph.removeEdge(this.file.getId(), edge));
     }
 }
