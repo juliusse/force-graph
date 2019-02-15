@@ -6,8 +6,6 @@ class Node {
         this.id = id;
         this.x = pos.x || Math.random() * fileGraph.width;
         this.y = pos.y || Math.random() * fileGraph.height;
-        this.xDelta = 0;
-        this.yDelta = 0;
         this.file = file;
         this.edges = [];
         this.timeSinceLastForceUpdate = 0;
@@ -23,21 +21,15 @@ class Node {
         this.nodeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.nodeSvg.setAttribute('r', '4');
         this.nodeSvg.setAttribute('fill', 'black');
-        // this.nodeSvg.setAttribute('stroke', 'black');
-        // this.nodeSvg.setAttribute('strokeWidth', '1px');
-        this.nodeSvg.setAttribute('cx', this.x);
-        this.nodeSvg.setAttribute('cy', this.y);
         this.el.appendChild(this.nodeSvg);
 
         this.textSvg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         this.textSvg.textContent = this.file.name;
-        // this.textSvg.setAttribute('dy', '-5');
 
         this.textSvg.setAttribute('fill', 'black');
-        // this.textSvg.setAttribute('font-weight', 'bold');
         this.textSvg.setAttribute('font-size', '9px');
-        this.textSvg.setAttribute('x', this.x - 15);
-        this.textSvg.setAttribute('y', this.y - 5);
+        this.textSvg.setAttribute('x', -15);
+        this.textSvg.setAttribute('y', -5);
         this.el.appendChild(this.textSvg);
 
 
@@ -48,8 +40,8 @@ class Node {
 
     get position() {
         return {
-            x: this.x + this.xDelta,
-            y: this.y + this.yDelta,
+            x: this.x,
+            y: this.y,
         };
     }
 
@@ -107,9 +99,16 @@ class Node {
         const desiredDistance = 200;
         const maxForce = 1000;
 
-        const forces = nodes.map(node => {
+        const aggregatedForces = nodes.reduce((result, node) => {
             if (node === this) {
-                return { x: 0, y: 0 };
+                return result;
+            }
+
+            result.count += 1;
+            const otherPosition = node.position;
+            if (Math.abs(otherPosition.x - this.x) > 150 ||
+                Math.abs(otherPosition.y - this.y) > 150) {
+                return result;
             }
 
             const distanceX = -(node.position.x - this.position.x);
@@ -123,21 +122,15 @@ class Node {
             const distanceForStrength = desiredDistance - distanceInfo.distance;
             const forceStrength = distanceForStrength <= 0 ? 0 :
                 distanceForStrength / desiredDistance * maxForce;
-            return {
-                x: distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength,
-                y: distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength,
-            };
-        });
 
-        const aggregatedForces = forces.reduce((result, force) => {
-            result.x += force.x;
-            result.y += force.y;
+            result.forceSum.x += distanceForStrength <= 0 ? 0 : (distanceInfo.x / distanceInfo.distance) * forceStrength;
+            result.forceSum.y += distanceForStrength <= 0 ? 0 : (distanceInfo.y / distanceInfo.distance) * forceStrength;
             return result;
-        }, { x: 0, y: 0 });
+        }, { forceSum: { x: 0, y: 0 }, count: 0 });
 
         return {
-            x: aggregatedForces.x / forces.length,
-            y: aggregatedForces.y / forces.length,
+            x: aggregatedForces.forceSum.x / aggregatedForces.count,
+            y: aggregatedForces.forceSum.y / aggregatedForces.count,
         };
     };
 
@@ -157,9 +150,9 @@ class Node {
         }
 
 
-        this.xDelta = this.xDelta + this.currentForce.x * timeDeltaInMs / 1000;
-        this.yDelta = this.yDelta + this.currentForce.y * timeDeltaInMs / 1000;
-        this.el.setAttribute('transform', `translate(${this.xDelta},${this.yDelta})`);
+        this.x += this.currentForce.x * timeDeltaInMs / 1000;
+        this.y += this.currentForce.y * timeDeltaInMs / 1000;
+        this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
     }
 
     onFileUpdate({ edgesToAdd, edgesToRemove }) {

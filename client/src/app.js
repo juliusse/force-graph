@@ -77,7 +77,7 @@ function loop(timestamp) {
     app.update(Math.min(500, progress));
 
     lastRender = timestamp;
-    if (cycles < 50) {
+    if (cycles < 15000) {
         setTimeout(() => window.requestAnimationFrame(loop), 40);
         times.push(Date.now() - start);
         cycles++;
