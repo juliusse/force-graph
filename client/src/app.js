@@ -1,13 +1,15 @@
 const $ = require('jquery');
 
+const { ListenableObject } = require('file-graph-shared');
 const appContainer = document.querySelector('#file-graph-app');
 require('./app.less');
 
 const FileGraph = require('./file-graph/file-graph');
 const FileInfo = require('./file-graph/file-info');
 
-class App {
+class App extends ListenableObject {
     constructor(element) {
+        super();
         this.fileGraph = null;
         this.selectedNode = null;
         this.displayedFileInfo = null;
@@ -71,7 +73,7 @@ class App {
     }
 
     update(timeDeltaInSec) {
-        this.fileGraph.update(timeDeltaInSec);
+        this.emitEvent('tick', timeDeltaInSec);
     }
 
 }

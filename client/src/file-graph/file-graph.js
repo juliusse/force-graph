@@ -27,6 +27,7 @@ class FileGraph extends ListenableObject {
         this.el.appendChild(this.edgeGroup);
         this.el.appendChild(this.nodeGroup);
 
+        this.listenTo(this.app, 'tick', this.onUpdate);
         this.addCenterCircle();
     }
 
@@ -107,7 +108,7 @@ class FileGraph extends ListenableObject {
         return this._config;
     }
 
-    update(timeDeltaInMs) {
+    onUpdate(app, timeDeltaInMs) {
         const nodes = _.values(this.nodes);
         _.forEach(nodes, node => {
             node.update(timeDeltaInMs, nodes, this.center);

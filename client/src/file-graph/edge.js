@@ -114,7 +114,9 @@ class Edge extends ListenableObject {
     update(timeDelta) {
         this.timeSinceLastUpdate += timeDelta;
 
-        if (this.config.drawEdges && this.timeSinceLastUpdate > 1000) {
+
+        if (this.config.drawEdges &&
+            (this.state.get('hasHighlightedNode') || this.state.get('hasSelectedNode') || this.timeSinceLastUpdate > 1000)) {
             this.el.setAttribute('x1', this.leftNode.position.x);
             this.el.setAttribute('y1', this.leftNode.position.y);
             this.el.setAttribute('x2', this.rightNode.position.x);
