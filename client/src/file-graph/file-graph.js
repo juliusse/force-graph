@@ -16,6 +16,7 @@ class FileGraph extends ListenableObject {
 
         this.nodes = {};
         this.edges = [];
+        this._tags = {};
 
         this.el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
         this.el.setAttribute('width', width);
@@ -65,6 +66,10 @@ class FileGraph extends ListenableObject {
             this.edgeGroup.appendChild(edge.el);
         }
 
+        tags.forEach(tag => {
+            this._tags[tag] = tag;
+        });
+
         this.listenTo(edge, 'change:isVisible', (edge, isVisible) => {
             isVisible ?
                 this.edgeGroup.appendChild(edge.el) :
@@ -106,6 +111,10 @@ class FileGraph extends ListenableObject {
 
     get config() {
         return this._config;
+    }
+
+    get tags() {
+        return Object.keys(this._tags);
     }
 
     onUpdate(app, timeDeltaInMs) {

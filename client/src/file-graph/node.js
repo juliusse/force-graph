@@ -1,10 +1,14 @@
 const $ = require('jquery');
-const { ListenableObject } = require('file-graph-shared');
+const UiElement = require('../elements/ui-element');
 
 require('./node.less');
-class Node extends ListenableObject {
+
+class Node extends UiElement {
     constructor(fileGraph, id, file, pos = {}) {
-        super();
+        super({
+            cssClasses: 'file-graph-node',
+            el: document.createElementNS('http://www.w3.org/2000/svg', 'g')
+        });
         this.fileGraph = fileGraph;
         this.config = this.fileGraph.config;
         this.id = id;
@@ -19,12 +23,8 @@ class Node extends ListenableObject {
         };
 
         this.set('selected', false);
-        this.set('highlighted', false);
 
-
-        this.el = document.createElementNS('http://www.w3.org/2000/svg', 'g');
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
-        this.el.classList.add('file-graph-node');
 
         this.nodeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
         this.el.appendChild(this.nodeSvg);
@@ -40,12 +40,7 @@ class Node extends ListenableObject {
         this.textSvg.setAttribute('y', -5);
         this.el.appendChild(this.textSvg);
 
-
-        $(this.el).on('click', () => this.set('selected', true));
-
-        $(this.el).on('mouseover', () => this.set('highlighted', true));
-        $(this.el).on('mouseout', () => this.set('highlighted', false));
-
+        this.listenTo(this, 'clicked', () => this.set('selected', true));
 
         this.on('change:highlighted', this.updateCssClass.bind(this));
         this.on('change:selected', this.updateCssClass.bind(this));

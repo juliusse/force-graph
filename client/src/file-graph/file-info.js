@@ -29,6 +29,7 @@ class FileInfo extends ListenableObject {
 
         this.el = document.createElement('div');
         this.el.classList.add('file-info');
+        this.el.classList.add('window');
         this.el.innerHTML = template;
 
         this.tagsField = new EditableText(file.tags.join(', '), {

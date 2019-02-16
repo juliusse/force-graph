@@ -2,15 +2,18 @@ const $ = require('jquery');
 
 const { ListenableObject } = require('file-graph-shared');
 const appContainer = document.querySelector('#file-graph-app');
-require('./app.less');
 
 const FileGraph = require('./file-graph/file-graph');
 const FileInfo = require('./file-graph/file-info');
+const TagList = require('./elements/tag-list');
 
+require('./app.less');
 class App extends ListenableObject {
     constructor(element) {
         super();
         this.fileGraph = null;
+        this.tagList = null;
+
         this.selectedNode = null;
         this.displayedFileInfo = null;
 
@@ -22,7 +25,11 @@ class App extends ListenableObject {
         this.graphContainer = document.createElement('div');
         this.graphContainer.classList.add('file-graph-container');
 
+        this.tagContainer = document.createElement('div');
+        this.tagContainer.classList.add('tag-container');
+
         this.el.appendChild(this.fileInfoContainer);
+        this.el.appendChild(this.tagContainer);
         this.el.appendChild(this.graphContainer);
     }
 
@@ -48,7 +55,11 @@ class App extends ListenableObject {
                 this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
                 return this.fileGraph.loadDataAsync();
             })
-            .then(() => this.graphContainer.appendChild(this.fileGraph.el))
+            .then(() => {
+                this.tagList = new TagList(this, this.fileGraph.tags);
+                this.graphContainer.appendChild(this.fileGraph.el);
+                this.tagContainer.appendChild(this.tagList.el);
+            })
             .then(() => this.graphContainer.scrollTo(width / 2 - 400, height / 2 - 250));
     }
 
