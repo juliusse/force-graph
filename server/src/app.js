@@ -5,13 +5,12 @@ const fs = require('fs').promises;
 const _ = require('lodash');
 
 const configuration = require('./config');
-const DataModel = require('./data-model');
-const { File } = require('file-graph-shared');
+const { Node, DataModel } = require('file-graph-shared').Models;
 const baseDir = process.argv[2];
 const dataFileName = 'filegraph.json';
 const dataFile = path.join(baseDir, dataFileName);
 
-const dataModel = new DataModel();
+let dataModel = null;
 let config = null;
 const startPromises = [];
 
@@ -19,16 +18,19 @@ function loadFile() {
     return fs.readFile(dataFile, 'utf8')
         .catch(() => JSON.stringify({
             version: 1,
-            files: [],
+            data: {
+                nodes: [],
+                tags: [],
+            },
             config: configuration.getDefaultConfig(),
         }));
 }
 
 function parseFileContent(content) {
-    const { files, config: configFromFile } = JSON.parse(content);
-    config = configFromFile;
-    config = _.defaultsDeep(config, configuration.getDefaultConfig());
-    files.forEach(f => dataModel.addFile(File.fromJSON(f)));
+    const { data, config: configFromFile } = JSON.parse(content);
+    config = _.defaultsDeep(configFromFile, configuration.getDefaultConfig());
+
+    dataModel = DataModel.loadFromJSON(data);
 }
 
 function readDirectory(baseDirectory, subDir = '') {
@@ -42,19 +44,20 @@ function readDirectory(baseDirectory, subDir = '') {
 
                 return fs.stat(path.join(fullPath, fileName))
                     .then(stat => {
-                        return stat.isFile() ?
-                            [new File(subDir, fileName)] :
-                            readDirectory(baseDirectory, path.join(subDir, fileName));
+                        if (stat.isFile()) {
+                            const constantAttributes = {
+                                directory: subDir
+                            };
+                            return [new Node(subDir + '/' + fileName, fileName, { constantAttributes })];
+                        }
+                        return readDirectory(baseDirectory, path.join(subDir, fileName));
                     });
-
-
-            }))
-                .then(fileArrays => _.flatten(fileArrays));
+            })).then(fileArrays => _.flatten(fileArrays));
         });
 }
 
-function addUnknownFiles(fileList) {
-    fileList.forEach(file => dataModel.addFile(file));
+function addUnknownFiles(nodeList) {
+    nodeList.forEach(node => dataModel.addNode(node));
 }
 
 startPromises.push(loadFile()
@@ -66,7 +69,7 @@ startPromises.push(loadFile()
 function saveDataAsync() {
     const toWrite = {
         version: 1,
-        files: _.values(dataModel.files),
+        data: dataModel.toJSON(),
         config
     };
 
@@ -78,18 +81,11 @@ app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '..', 'entrypoints', 'index.html'));
 });
 
-app.get('/data', (req, res) => {
-    res.json(data);
-});
-
 app.use('/js', express.static('../client/bin'));
 express.static('./entrypoints');
 
 app.get('/graph', (req, res) => {
-    res.json({
-        nodes: dataModel.files,
-        edges: dataModel.edges
-    });
+    res.json(dataModel.toJSON())
 });
 
 app.get('/config', (req, res) => {
@@ -115,7 +111,7 @@ app.post('/open/folder', (req, res) => {
 Promise.all(startPromises)
     .then(() => {
         app.listen(3000, function () {
-            console.log('Example app listening on port 3000!');
+            console.log('Graph backend listening on port 3000!');
         });
     });
 

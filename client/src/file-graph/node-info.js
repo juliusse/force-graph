@@ -21,23 +21,23 @@ const EditableText = require('../elements/editable-text');
 const { ListenableObject } = require('file-graph-shared');
 
 
-require('./file-info.less');
-class FileInfo extends ListenableObject {
-    constructor(file) {
+require('./node-info.less');
+class NodeInfo extends ListenableObject {
+    constructor(node) {
         super();
-        this.file = file;
+        this.node = node;
 
         this.el = document.createElement('div');
-        this.el.classList.add('file-info');
+        this.el.classList.add('node-info');
         this.el.classList.add('window');
         this.el.innerHTML = template;
 
-        this.tagsField = new EditableText(file.tags.join(', '), {
+        this.tagsField = new EditableText(node.tags.map(t => t.name).join(', '), {
             onTextChange: this.onTagsChanged.bind(this)
         });
 
-        this.el.querySelector('.path').innerText = file.path;
-        this.el.querySelector('.name').innerText = file.name;
+        this.el.querySelector('.path').innerText = node.constantAttributes.directory;
+        this.el.querySelector('.name').innerText = node.name;
         this.el.querySelector('.tags').appendChild(this.tagsField.el);
 
         $(this.el.querySelector('.btn-close'))
@@ -54,4 +54,4 @@ class FileInfo extends ListenableObject {
     }
 }
 
-module.exports = FileInfo;
+module.exports = NodeInfo;

@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "express": "4.16.4",
-    "lodash": "4.17.11"
+    "lodash": "^4.17.11",
+    "uuid": "^3.3.2"
   }
 }

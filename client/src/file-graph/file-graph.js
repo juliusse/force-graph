@@ -1,18 +1,23 @@
 const $ = require('jquery');
 const _ = require('lodash');
-
-const Node = require('./node');
-const Edge = require('./edge');
-const { File, Utils, ListenableObject } = require('file-graph-shared');
+const { Models, Utils, ListenableObject } = require('file-graph-shared');
 const { removeElement } = Utils;
 
+
+const { Tag } = Models;
+
+const NodeView = require('./node-view');
+const EdgeView = require('./edge-view');
+
+
 class FileGraph extends ListenableObject {
-    constructor(width, height, config, app) {
+    constructor(width, height, config, app, dataModel) {
         super();
         this.width = width;
         this.height = height;
         this._config = config;
         this.app = app;
+        this.dataModel = dataModel;
 
         this.nodes = {};
         this.edges = [];
@@ -30,6 +35,7 @@ class FileGraph extends ListenableObject {
 
         this.listenTo(this.app, 'tick', this.onUpdate);
         this.addCenterCircle();
+        this.init(this.dataModel);
     }
 
     addCenterCircle() {
@@ -46,34 +52,43 @@ class FileGraph extends ListenableObject {
         this.el.appendChild(this.centerCircle);
     }
 
-    addNode(file) {
-        const node = new Node(this, file.getId(), file);
-        this.nodeGroup.appendChild(node.el);
-        this.nodes[node.id] = node;
+    addNode(node) {
+        const nodeView = new NodeView(this, node);
+        this.nodeGroup.appendChild(nodeView.el);
+        this.nodes[nodeView.id] = nodeView;
 
         node.on('change:selected', (node, isSelected) => {
             if (isSelected) {
                 this.emitEvent('nodeSelected', { node });
             }
         });
-        return node;
+        return nodeView;
     }
 
-    addEdge(nodeId1, nodeId2, { tags = [], path = null } = {}) {
-        const edge = new Edge(this, this.nodes[nodeId1], this.nodes[nodeId2], { tags, path });
-        this.edges.push(edge);
-        if (edge.isVisible) {
-            this.edgeGroup.appendChild(edge.el);
+    addTag(tagName) {
+        if (this._tags[tagName] == null) {
+            const tag = new Tag(tagName);
+            this._tags[tagName] = tag;
         }
 
-        tags.forEach(tag => {
-            this._tags[tag] = tag;
-        });
+        return;
+    }
 
-        this.listenTo(edge, 'change:isVisible', (edge, isVisible) => {
+    addEdge(edge) {
+        const leftNodeView = this.nodes[edge.leftNode.id];
+        const rightNodeView = this.nodes[edge.rightNode.id];
+
+        const edgeView = new EdgeView(this, edge, leftNodeView, rightNodeView);
+        this.edges.push(edgeView);
+        if (edgeView.isVisible) {
+            this.edgeGroup.appendChild(edgeView.el);
+        }
+
+
+        this.listenTo(edgeView, 'change:isVisible', (edgeView, isVisible) => {
             isVisible ?
-                this.edgeGroup.appendChild(edge.el) :
-                this.edgeGroup.removeChild(edge.el);
+                this.edgeGroup.appendChild(edgeView.el) :
+                this.edgeGroup.removeChild(edgeView.el);
         });
 
         return edge;
@@ -92,14 +107,9 @@ class FileGraph extends ListenableObject {
         this.edges = removeElement(this.edges, edge);
     }
 
-    loadDataAsync() {
-        return $.get('/graph')
-            .done((graph) => {
-                graph.nodes.forEach(n => this.addNode(File.fromJSON(n)));
-                graph.edges.forEach(e => this.addEdge(e.leftNode, e.rightNode, {
-                    tags: e.tags, path: e.path
-                }));
-            });
+    init(dataModel) {
+        dataModel.nodes.forEach(n => this.addNode(n));
+        dataModel.edges.forEach(e => this.addEdge(e));
     }
 
     get center() {

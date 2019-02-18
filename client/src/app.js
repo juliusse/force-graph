@@ -1,16 +1,21 @@
 const $ = require('jquery');
 
-const { ListenableObject } = require('file-graph-shared');
+const { Models, ListenableObject } = require('file-graph-shared');
 const appContainer = document.querySelector('#file-graph-app');
 
+// models
+const DataModel = Models.DataModel;
+
+// views
 const FileGraph = require('./file-graph/file-graph');
-const FileInfo = require('./file-graph/file-info');
+const NodeInfo = require('./file-graph/node-info');
 const TagList = require('./elements/tag-list');
 
 require('./app.less');
 class App extends ListenableObject {
     constructor(element) {
         super();
+        this.dataModel = null;
         this.fileGraph = null;
         this.tagList = null;
 
@@ -44,18 +49,27 @@ class App extends ListenableObject {
         });
     }
 
+    loadDataAsync() {
+        return new Promise((res) => {
+            $.get('/graph')
+                .done(res);
+        });
+    }
+
     start() {
         const width = 2500;
         const height = 2500;
 
-        return this.loadConfigAsync()
-            .then(config => {
-                this.fileGraph = new FileGraph(width, height, config, this);
+        return Promise.all([
+            this.loadConfigAsync(),
+            this.loadDataAsync()
+        ])
+            .then(([config, data]) => {
+                this.dataModel = DataModel.loadFromJSON(data);
+                this.fileGraph = new FileGraph(width, height, config, this, this.dataModel);
 
                 this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
-                return this.fileGraph.loadDataAsync();
-            })
-            .then(() => {
+
                 this.tagList = new TagList(this, this.fileGraph.tags);
                 this.graphContainer.appendChild(this.fileGraph.el);
                 this.tagContainer.appendChild(this.tagList.el);
@@ -76,7 +90,7 @@ class App extends ListenableObject {
         this.deselectNode();
 
         this.selectedNode = node;
-        this.displayedFileInfo = new FileInfo(node.file);
+        this.displayedFileInfo = new NodeInfo(node);
         this.displayedFileInfo.on('clicked:close', this.deselectNode.bind(this));
 
 

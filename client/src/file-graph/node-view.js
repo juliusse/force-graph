@@ -1,20 +1,20 @@
 const $ = require('jquery');
 const UiElement = require('../elements/ui-element');
 
-require('./node.less');
+require('./node-view.less');
 
-class Node extends UiElement {
-    constructor(fileGraph, id, file, pos = {}) {
+class NodeView extends UiElement {
+    constructor(fileGraph, node, pos = {}) {
         super({
             cssClasses: 'file-graph-node',
             el: document.createElementNS('http://www.w3.org/2000/svg', 'g')
         });
         this.fileGraph = fileGraph;
         this.config = this.fileGraph.config;
-        this.id = id;
+        this.id = node.id;
         this.x = pos.x || Math.random() * fileGraph.width;
         this.y = pos.y || Math.random() * fileGraph.height;
-        this.file = file;
+        this.node = node;
         this.edges = [];
         this.timeSinceLastForceUpdate = 0;
         this.currentForce = {
@@ -34,29 +34,32 @@ class Node extends UiElement {
         this.el.appendChild(this.titleSvg);
 
         this.textSvg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        this.textSvg.textContent = this.file.name;
+        this.textSvg.textContent = this.node.name;
 
         this.textSvg.setAttribute('x', -15);
         this.textSvg.setAttribute('y', -5);
         this.el.appendChild(this.textSvg);
 
-        this.listenTo(this, 'clicked', () => this.set('selected', true));
+        this.listenTo(this, 'clicked', () => this.node.set('selected', true));
 
-        this.on('change:highlighted', this.updateCssClass.bind(this));
-        this.on('change:selected', this.updateCssClass.bind(this));
-        this.file.on('updated', this.onFileUpdate.bind(this));
+        this.listenTo(this, 'change:highlighted', (view, value) =>
+            this.node.highlighted = value);
+
+        this.listenTo(this.node, 'change:highlighted', this.updateCssClass);
+        this.listenTo(this.node, 'change:selected', this.updateCssClass);
+        this.listenTo(this.node, 'updated', this.onNodeUpdate);
     }
 
     updateCssClass() {
-        const selected = this.get('selected');
-        const highlighted = this.get('highlighted');
+        const selected = this.node.get('selected');
+        const highlighted = this.node.get('highlighted');
 
         this.el.classList.toggle('hover', !selected && highlighted);
         this.el.classList.toggle('selected', selected);
     }
 
     deselect() {
-        this.set('selected', false);
+        this.node.set('selected', false);
     }
 
     get position() {
@@ -176,15 +179,15 @@ class Node extends UiElement {
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
     }
 
-    onFileUpdate(file, { tagsToAdd, tagsToRemove }) {
-        tagsToAdd.forEach(({ otherFile, tag }) => {
-            const edge = this.getEdgeTo(otherFile) ||
-                this.fileGraph.addEdge(this.id, otherFile);
+    onNodeUpdate(node, { tagsToAdd, tagsToRemove }) {
+        tagsToAdd.forEach(({ otherNode, tag }) => {
+            const edge = this.getEdgeTo(otherNode) ||
+                this.fileGraph.addEdge(this.id, otherNode);
 
             edge.addTag(tag);
         });
 
-        tagsToRemove.forEach(({ otherFile, tag }) => this.getEdgeTo(otherFile).removeTag(tag));
+        tagsToRemove.forEach(({ otherNode, tag }) => this.getEdgeTo(otherNode).removeTag(tag));
     }
 
     getEdgeTo(nodeId) {
@@ -193,4 +196,4 @@ class Node extends UiElement {
     }
 }
 
-module.exports = Node;
+module.exports = NodeView;
