@@ -3,17 +3,18 @@ const template = `
 const UiElement = require('./ui-element');
 
 
-require('./tag.less');
-class Tag extends UiElement {
-    constructor(name) {
+require('./tag-view.less');
+class TagView extends UiElement {
+    constructor(tag) {
         super({
             cssClasses: 'tag-list-tag flex',
-            template
+            template: require('./tag-view.pug')
         });
-        this.name = name;
+        this.tag = tag;
 
-        this.nameDiv = this.el.querySelector('.tag');
-        this.nameDiv.innerText = this.name;
+        this.template({
+            tagName: this.tag.name
+        });
 
         this.listenTo(this,'change:highlighted', this.updateCssClass);
     }
@@ -25,4 +26,4 @@ class Tag extends UiElement {
     }
 }
 
-module.exports = Tag;
+module.exports = TagView;

@@ -7,7 +7,8 @@ class NodeView extends UiElement {
     constructor(fileGraph, node, pos = {}) {
         super({
             cssClasses: 'file-graph-node',
-            el: document.createElementNS('http://www.w3.org/2000/svg', 'g')
+            el: document.createElementNS('http://www.w3.org/2000/svg', 'g'),
+            template: require('./node-view.pug')
         });
         this.fileGraph = fileGraph;
         this.config = this.fileGraph.config;
@@ -24,24 +25,14 @@ class NodeView extends UiElement {
 
         this.set('selected', false);
 
+        this.template({
+            nodeId: node.id,
+            nodeName: node.name
+        });
+
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
 
-        this.nodeSvg = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        this.el.appendChild(this.nodeSvg);
-
-        this.titleSvg = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        this.titleSvg.textContent = this.id;
-        this.el.appendChild(this.titleSvg);
-
-        this.textSvg = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-        this.textSvg.textContent = this.node.name;
-
-        this.textSvg.setAttribute('x', -15);
-        this.textSvg.setAttribute('y', -5);
-        this.el.appendChild(this.textSvg);
-
         this.listenTo(this, 'clicked', () => this.node.set('selected', true));
-
         this.listenTo(this, 'change:highlighted', (view, value) =>
             this.node.highlighted = value);
 

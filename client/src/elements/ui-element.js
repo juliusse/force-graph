@@ -23,8 +23,8 @@ class UiElement extends ListenableObject {
         this.el.innerHTML = this._template(args);
     }
 
-    findByClass(className) {
-        return this.el.querySelector(className);
+    findBy(querySelector) {
+        return this.el.querySelector(querySelector);
     }
 }
 

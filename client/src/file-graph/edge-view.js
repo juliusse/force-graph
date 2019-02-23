@@ -1,12 +1,18 @@
 const _ = require('lodash');
-const { Utils, ListenableObject } = require('file-graph-shared');
+const { Utils } = require('file-graph-shared');
 const { removeElement } = Utils;
+const UiElement = require('../elements/ui-element');
+
 
 require('./edge-view.less');
 
-class EdgeView extends ListenableObject {
+class EdgeView extends UiElement {
     constructor(fileGraph, edge, leftNodeView, rightNodeView) {
-        super();
+        super({
+            cssClasses: 'file-graph-edge',
+            el: document.createElementNS('http://www.w3.org/2000/svg', 'line'),
+            template: require('./edge-view.pug')
+        });
         this.fileGraph = fileGraph;
         this.config = fileGraph.config;
         this.edge = edge;
@@ -16,19 +22,13 @@ class EdgeView extends ListenableObject {
 
         this.set('isVisible', false);
 
-
-
-        this.el = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         this.el.setAttribute('x1', this.leftNode.x);
         this.el.setAttribute('y1', this.leftNode.y);
         this.el.setAttribute('x2', this.rightNode.x);
         this.el.setAttribute('y2', this.rightNode.y);
-        this.el.classList.add('file-graph-edge');
 
         this.leftNode.edges.push(this);
         this.rightNode.edges.push(this);
-
-
 
         this.edge.on('change:hasHighlightedNode', this.updateCssClass.bind(this));
         this.edge.on('change:hasSelectedNode', this.updateCssClass.bind(this));

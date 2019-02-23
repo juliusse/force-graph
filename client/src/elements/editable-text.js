@@ -1,7 +1,6 @@
 const $ = require('jquery');
 const UiElement = require('./ui-element');
 
-
 require('./editable-text.less');
 class EditableText extends UiElement {
     constructor(initialText) {
@@ -14,8 +13,8 @@ class EditableText extends UiElement {
             text: this.text,
         });
 
-        this.textField = this.findByClass('.text-field');
-        this.inputField = this.findByClass('.input-field');
+        this.textField = this.findBy('.text-field');
+        this.inputField = this.findBy('.input-field');
 
         $(this.textField).on('click', () => {
             this.inputField.value = this.text;

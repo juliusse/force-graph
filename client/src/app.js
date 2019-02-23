@@ -9,7 +9,7 @@ const DataModel = Models.DataModel;
 // views
 const FileGraph = require('./file-graph/file-graph');
 const NodeInfo = require('./file-graph/node-info');
-const TagList = require('./elements/tag-list');
+const TagListView = require('./elements/tag-list-view');
 
 require('./app.less');
 class App extends ListenableObject {
@@ -70,7 +70,7 @@ class App extends ListenableObject {
 
                 this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
 
-                this.tagList = new TagList(this, this.fileGraph.tags);
+                this.tagList = new TagListView(this, this.dataModel.tags);
                 this.graphContainer.appendChild(this.fileGraph.el);
                 this.tagContainer.appendChild(this.tagList.el);
             })
