@@ -36,6 +36,9 @@ class FileGraph extends ListenableObject {
         this.listenTo(this.app, 'tick', this.onUpdate);
         this.addCenterCircle();
         this.init(this.dataModel);
+
+        this.listenTo(this.dataModel, 'added:edge', (dm, edge) => this.addEdge(edge));
+        this.listenTo(this.dataModel, 'removed:edge', (dm, edge) => this.removeEdge(edge));
     }
 
     addCenterCircle() {
@@ -57,21 +60,12 @@ class FileGraph extends ListenableObject {
         this.nodeGroup.appendChild(nodeView.el);
         this.nodes[nodeView.id] = nodeView;
 
-        node.on('change:selected', (node, isSelected) => {
+        this.listenTo(node, 'change:selected', (node, isSelected) => {
             if (isSelected) {
                 this.emitEvent('nodeSelected', { node });
             }
         });
         return nodeView;
-    }
-
-    addTag(tagName) {
-        if (this._tags[tagName] == null) {
-            const tag = new Tag(tagName);
-            this._tags[tagName] = tag;
-        }
-
-        return;
     }
 
     addEdge(edge) {
@@ -86,6 +80,11 @@ class FileGraph extends ListenableObject {
 
 
         this.listenTo(edgeView, 'change:isVisible', (edgeView, isVisible) => {
+            if (!this.edges.some(e => e === edgeView)) {
+                // TODO correct event listening
+                return;
+            }
+
             isVisible ?
                 this.edgeGroup.appendChild(edgeView.el) :
                 this.edgeGroup.removeChild(edgeView.el);
@@ -94,16 +93,16 @@ class FileGraph extends ListenableObject {
         return edge;
     }
 
-    removeEdge(nodeId1, nodeId2) {
-        const edge = this.edges.find(edge => {
-
-            return (edge.leftNode.id === nodeId1 && edge.rightNode.id === nodeId2) ||
-                (edge.rightNode.id === nodeId1 && edge.leftNode.id === nodeId2);
+    removeEdge(edgeModel) {
+        const edge = this.edges.find(edgeView => {
+            return edgeView.edge === edgeModel;
         });
 
         if (edge.isVisible) {
             this.edgeGroup.removeChild(edge.el);
         }
+
+        this.stopListening(edge, 'change:isVisible');
         this.edges = removeElement(this.edges, edge);
     }
 
