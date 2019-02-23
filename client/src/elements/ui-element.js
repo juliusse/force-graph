@@ -26,6 +26,13 @@ class UiElement extends ListenableObject {
     findBy(querySelector) {
         return this.el.querySelector(querySelector);
     }
+
+    remove() {
+        if(this.el.parentNode != null) {
+            console.log('removing view');
+            this.el.parentNode.removeChild(this.el);
+        }
+    }
 }
 
 module.exports = UiElement;

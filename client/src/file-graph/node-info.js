@@ -14,7 +14,7 @@ class NodeInfo extends UiElement {
         this.node = node;
 
         this.template({
-            path: node.constantAttributes.directory,
+            constantAttributes: node.constantAttributes,
             name: node.name
         });
 

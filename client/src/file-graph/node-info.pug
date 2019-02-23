@@ -1,12 +1,13 @@
 .flex
-    .title File Info
+    .title Node Info
     .btn-close X
-.group
-    .label Location
-    .path=path
 .group
     .label Name
     .name=name
+each value, name in constantAttributes
+    .group
+        .label=name
+        .value=value
 .group
     .label Tags
     .tags

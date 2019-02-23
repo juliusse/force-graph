@@ -70,7 +70,7 @@ class App extends ListenableObject {
 
                 this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
 
-                this.tagList = new TagListView(this, this.dataModel.tags);
+                this.tagList = new TagListView(this, this.dataModel);
                 this.graphContainer.appendChild(this.fileGraph.el);
                 this.tagContainer.appendChild(this.tagList.el);
             })
@@ -79,7 +79,7 @@ class App extends ListenableObject {
 
     deselectNode() {
         if (this.displayedFileInfo !== null) {
-            this.fileInfoContainer.removeChild(this.displayedFileInfo.el);
+            this.displayedFileInfo.remove();
             this.selectedNode.deselect();
             this.selectedNode = null;
             this.displayedFileInfo = null;
