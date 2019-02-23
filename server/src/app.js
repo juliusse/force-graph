@@ -1,4 +1,6 @@
 const express = require('express');
+const bodyParser = require('body-parser');
+
 const app = express();
 const path = require('path');
 const fs = require('fs').promises;
@@ -76,7 +78,7 @@ function saveDataAsync() {
     return fs.writeFile(dataFile, JSON.stringify(toWrite), 'utf8');
 }
 
-// app.use('*', express.bodyParser());
+app.use(bodyParser.json({}));
 app.get('/', function (req, res) {
     res.sendFile(path.join(__dirname, '..', 'entrypoints', 'index.html'));
 });
@@ -94,9 +96,11 @@ app.get('/config', (req, res) => {
     });
 });
 
-app.post('/file', (req, res) => {
-    const sendFile = File.fromJSON(JSON.parse(req.query.file));
-    const changes = dataModel.updateFile(sendFile);
+app.post('/node', (req, res) => {
+    const nodeJson = req.body.node;
+    const newTags = nodeJson.tags;
+    const node = dataModel._nodes[nodeJson.id];
+    const changes = node.updateTags(newTags, dataModel);
 
     saveDataAsync()
         .then(() => res.send(changes));

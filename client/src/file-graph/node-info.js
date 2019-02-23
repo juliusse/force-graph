@@ -42,15 +42,15 @@ class NodeInfo extends ListenableObject {
 
         $(this.el.querySelector('.btn-close'))
             .on('click', () => this.emitEvent('clicked:close'));
+
+        this.listenTo(this.tagsField, 'changed:text', this.onTagsChanged);
     }
 
     onTagsChanged(editableText, text) {
-        const newTags = text
+        const newTagNames = _.compact(text
             .split(',')
-            .map(t => t.trim());
-
-        this.file.tags = newTags;
-        this.file.save();
+            .map(t => t.trim()));
+        this.emitEvent('changedTags:node', { node: this.node, newTagNames});
     }
 }
 

@@ -93,8 +93,15 @@ class App extends ListenableObject {
         this.displayedFileInfo = new NodeInfo(node);
         this.displayedFileInfo.on('clicked:close', this.deselectNode.bind(this));
 
+        this.listenTo(this.displayedFileInfo, 'changedTags:node', this.updateNodeTags);
+
 
         this.fileInfoContainer.appendChild(this.displayedFileInfo.el);
+    }
+
+    updateNodeTags(fileInfoDialog, {node, newTagNames}) {
+        node.updateTags(newTagNames, this.dataModel);
+        node.save();
     }
 
     update(timeDeltaInSec) {

@@ -47,7 +47,6 @@ class NodeView extends UiElement {
 
         this.listenTo(this.node, 'change:highlighted', this.updateCssClass);
         this.listenTo(this.node, 'change:selected', this.updateCssClass);
-        this.listenTo(this.node, 'updated', this.onNodeUpdate);
     }
 
     updateCssClass() {
@@ -177,17 +176,6 @@ class NodeView extends UiElement {
         this.x += this.currentForce.x * timeDeltaInMs / 1000;
         this.y += this.currentForce.y * timeDeltaInMs / 1000;
         this.el.setAttribute('transform', `translate(${this.x},${this.y})`);
-    }
-
-    onNodeUpdate(node, { tagsToAdd, tagsToRemove }) {
-        tagsToAdd.forEach(({ otherNode, tag }) => {
-            const edge = this.getEdgeTo(otherNode) ||
-                this.fileGraph.addEdge(this.id, otherNode);
-
-            edge.addTag(tag);
-        });
-
-        tagsToRemove.forEach(({ otherNode, tag }) => this.getEdgeTo(otherNode).removeTag(tag));
     }
 
     getEdgeTo(nodeId) {

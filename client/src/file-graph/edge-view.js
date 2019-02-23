@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const { Utils, ListenableObject } = require('file-graph-shared');
 const { removeElement } = Utils;
 
@@ -91,7 +92,7 @@ class EdgeView extends ListenableObject {
     getForce() {
         const pathForce = this.edge.constantAttributes.directory != null
             ? this.config.forces.types.sameFolder : 0;
-        const tagForce = this.edge.tags.length * this.config.forces.types.sameTag;
+        const tagForce = _.values(this.edge.tags).length * this.config.forces.types.sameTag;
         return pathForce + tagForce;
     }
 

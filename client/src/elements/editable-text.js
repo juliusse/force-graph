@@ -1,24 +1,21 @@
 const $ = require('jquery');
+const UiElement = require('./ui-element');
+
 
 require('./editable-text.less');
-class EditableText {
-    constructor(initialText, listener) {
-        this.listener = listener;
+class EditableText extends UiElement {
+    constructor(initialText) {
+        super({
+            cssClasses: 'editable-text',
+            template: require('./editable-text.pug'),
+        });
         this.text = initialText;
+        this.template({
+            text: this.text,
+        });
 
-        this.el = document.createElement('div');
-        this.el.classList.add('editable-text');
-
-        this.textField = document.createElement('div');
-        this.textField.classList.add('text-field');
-        this.textField.innerText = this.text;
-
-        this.inputField = document.createElement('input');
-        this.inputField.classList.add('input-field');
-        this.inputField.classList.add('hidden');
-
-        this.el.appendChild(this.textField);
-        this.el.appendChild(this.inputField);
+        this.textField = this.findByClass('.text-field');
+        this.inputField = this.findByClass('.input-field');
 
         $(this.textField).on('click', () => {
             this.inputField.value = this.text;
@@ -27,7 +24,7 @@ class EditableText {
             this.inputField.classList.remove('hidden');
 
             this.inputField.focus();
-        })
+        });
 
         $(this.inputField).on('keydown', (event) => {
             if(event.keyCode !== 13) { // Enter
@@ -40,7 +37,7 @@ class EditableText {
             this.textField.classList.remove('hidden');
             this.inputField.classList.add('hidden');
 
-            this.listener.onTextChange(this, this.text);
+            this.emitEvent('changed:text', this.text);
         })
     }
 }

@@ -21,6 +21,11 @@ module.exports = {
             }, {
                 loader: 'less-loader' // compiles Less to CSS
             }]
+        },{
+            test: /\.pug$/,
+            use: [{
+                loader: 'pug-loader'
+            }]
         }]
     }
 };
