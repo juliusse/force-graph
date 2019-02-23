@@ -38,13 +38,15 @@ class NodeView extends UiElement {
 
         this.listenTo(this.node, 'change:highlighted', this.updateCssClass);
         this.listenTo(this.node, 'change:selected', this.updateCssClass);
+        this.listenTo(this.node, 'change:hasHighlightedTag', this.updateCssClass);
     }
 
     updateCssClass() {
         const selected = this.node.get('selected');
         const highlighted = this.node.get('highlighted');
+        const higlightedTag = this.node.get('hasHighlightedTag');
 
-        this.el.classList.toggle('hover', !selected && highlighted);
+        this.el.classList.toggle('hover', !selected && (highlighted || higlightedTag));
         this.el.classList.toggle('selected', selected);
     }
 

@@ -17,6 +17,7 @@ class TagView extends UiElement {
         });
 
         this.listenTo(this,'change:highlighted', this.updateCssClass);
+        this.listenTo(this,'change:highlighted', (self, val) => self.tag.highlighted = val);
     }
 
     updateCssClass() {

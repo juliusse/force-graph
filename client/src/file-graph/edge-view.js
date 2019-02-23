@@ -32,9 +32,13 @@ class EdgeView extends UiElement {
 
         this.edge.on('change:hasHighlightedNode', this.updateCssClass.bind(this));
         this.edge.on('change:hasSelectedNode', this.updateCssClass.bind(this));
+        this.listenTo(this.edge, 'change:hasHighlightedTag', this.updateCssClass);
+
 
         this.edge.on('change:hasHighlightedNode', this.updateVisibility.bind(this));
         this.edge.on('change:hasSelectedNode', this.updateVisibility.bind(this));
+        this.listenTo(this.edge, 'change:hasHighlightedTag', this.updateVisibility);
+
 
         this.edge.onNodeSelectionChanged();
         this.updateVisibility();
@@ -50,7 +54,8 @@ class EdgeView extends UiElement {
         }
         const isVisible = this.edge.tags.length > 0 ||
             this.edge.get('hasHighlightedNode') === true ||
-            this.edge.get('hasSelectedNode') === true;
+            this.edge.get('hasSelectedNode') === true ||
+            this.edge.get('hasSelectedTag') === true;
         this.set('isVisible', isVisible);
     }
 
@@ -71,9 +76,10 @@ class EdgeView extends UiElement {
 
     updateCssClass() {
         const hasSelected = this.edge.get('hasSelectedNode');
-        const hasHighlighted = this.edge.get('hasHighlightedNode');
+        const hasHighlightedNode = this.edge.get('hasHighlightedNode');
+        const hasHighlightedTag = this.edge.get('hasHighlightedTag');
 
-        this.el.classList.toggle('hover', !hasSelected && hasHighlighted);
+        this.el.classList.toggle('hover', !hasSelected && (hasHighlightedNode || hasHighlightedTag));
         this.el.classList.toggle('selected', hasSelected);
     }
 
