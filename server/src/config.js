@@ -6,8 +6,8 @@ module.exports = {
             forces: {
                 types: {
                     repellingNodes: 1,
-                    sameFolder: 0.5,
                     sameTag: 10,
+                    sameStaticAttribute: 0.5
                 },
                 edge: {
                     maxForce: 250,

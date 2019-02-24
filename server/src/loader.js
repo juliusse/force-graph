@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const _ = require('lodash');
 
 const configuration = require('./config');
-const { Node, DataModel } = require('file-graph-shared').Models;
+const { Node, DataModel, StaticAttribute     } = require('file-graph-shared').Models;
 const dataFileName = 'filegraph.json';
 
 
@@ -43,10 +43,10 @@ function readDirectoryTree(baseDirectory, subDir = '') {
                 return fs.stat(path.join(fullPath, fileName))
                     .then(stat => {
                         if (stat.isFile()) {
-                            const constantAttributes = {
-                                directory: subDir
-                            };
-                            return [new Node(subDir + '/' + fileName, fileName, { constantAttributes })];
+                            const staticAttributes = [
+                                new StaticAttribute('directory', subDir)
+                            ];
+                            return [new Node(subDir + '/' + fileName, fileName, { staticAttributes })];
                         }
                         return readDirectoryTree(baseDirectory, path.join(subDir, fileName));
                     });

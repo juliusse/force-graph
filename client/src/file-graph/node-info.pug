@@ -4,10 +4,10 @@
 .group
     .label Name
     .name=name
-each value, name in constantAttributes
+each staticAttribute in staticAttributes
     .group
-        .label=name
-        .value=value
+        .label=staticAttribute.group
+        .value=staticAttribute.value
 .group
     .label Tags
     .tags

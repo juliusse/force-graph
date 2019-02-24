@@ -30,14 +30,12 @@ class EdgeView extends UiElement {
         this.leftNode.edges.push(this);
         this.rightNode.edges.push(this);
 
-        this.edge.on('change:hasHighlightedNode', this.updateCssClass.bind(this));
         this.edge.on('change:hasSelectedNode', this.updateCssClass.bind(this));
-        this.listenTo(this.edge, 'change:hasHighlightedTag', this.updateCssClass);
+        this.listenTo(this.edge, 'change:hasHighlightedRelative', this.updateCssClass);
 
 
-        this.edge.on('change:hasHighlightedNode', this.updateVisibility.bind(this));
         this.edge.on('change:hasSelectedNode', this.updateVisibility.bind(this));
-        this.listenTo(this.edge, 'change:hasHighlightedTag', this.updateVisibility);
+        this.listenTo(this.edge, 'change:hasHighlightedRelative', this.updateVisibility);
 
 
         this.edge.onNodeSelectionChanged();
@@ -53,9 +51,8 @@ class EdgeView extends UiElement {
             return;
         }
         const isVisible = this.edge.tags.length > 0 ||
-            this.edge.get('hasHighlightedNode') === true ||
             this.edge.get('hasSelectedNode') === true ||
-            this.edge.get('hasSelectedTag') === true;
+            this.edge.get('hasHighlightedRelative') === true;
         this.set('isVisible', isVisible);
     }
 
@@ -76,10 +73,9 @@ class EdgeView extends UiElement {
 
     updateCssClass() {
         const hasSelected = this.edge.get('hasSelectedNode');
-        const hasHighlightedNode = this.edge.get('hasHighlightedNode');
-        const hasHighlightedTag = this.edge.get('hasHighlightedTag');
+        const hasHighlightedRelative = this.edge.get('hasHighlightedRelative');
 
-        this.el.classList.toggle('hover', !hasSelected && (hasHighlightedNode || hasHighlightedTag));
+        this.el.classList.toggle('hover', !hasSelected && hasHighlightedRelative);
         this.el.classList.toggle('selected', hasSelected);
     }
 
@@ -96,8 +92,7 @@ class EdgeView extends UiElement {
     }
 
     getForce() {
-        const pathForce = this.edge.constantAttributes.directory != null
-            ? this.config.forces.types.sameFolder : 0;
+        const pathForce = _.values(this.edge.staticAttributes).length * this.config.forces.types.sameStaticAttribute;
         const tagForce = _.values(this.edge.tags).length * this.config.forces.types.sameTag;
         return pathForce + tagForce;
     }
@@ -107,7 +102,7 @@ class EdgeView extends UiElement {
 
 
         if (this.config.drawEdges &&
-            (this.edge.get('hasHighlightedNode') || this.edge.get('hasSelectedNode') || this.timeSinceLastUpdate > 1000)) {
+            (this.edge.get('hasHighlightedRelative') || this.edge.get('hasSelectedNode') || this.timeSinceLastUpdate > 1000)) {
             this.el.setAttribute('x1', this.leftNode.position.x);
             this.el.setAttribute('y1', this.leftNode.position.y);
             this.el.setAttribute('x2', this.rightNode.position.x);
