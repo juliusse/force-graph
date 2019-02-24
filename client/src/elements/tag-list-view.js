@@ -4,12 +4,11 @@ const TagView = require('./tag-view');
 require('./tag-list-view.less');
 
 class TagListView extends UiElement {
-    constructor(app, dataModel) {
+    constructor(dataModel) {
         super({
             cssClasses: 'tag-list window',
             template: require('./tag-list-view.pug'),
         });
-        this.app = app;
         this.dataModel = dataModel;
         this.tagElementMap = {};
 

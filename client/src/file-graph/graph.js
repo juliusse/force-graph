@@ -30,7 +30,6 @@ class Graph extends UiElement {
         this.edgeGroup = this.findBy('.edge-group');
         this.nodeGroup = this.findBy('.node-group');
 
-        this.listenTo(this.app, 'tick', this.onUpdate);
         this.addCenterCircle();
         this.init(this.dataModel);
 

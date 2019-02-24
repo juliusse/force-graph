@@ -12,6 +12,7 @@ const DataModel = Models.DataModel;
 const Graph = require('./file-graph/graph');
 const NodeInfo = require('./file-graph/node-info');
 const TagListView = require('./elements/tag-list-view');
+const StaticAttributesListView = require('./elements/static-attribute/static-attribute-list-view');
 
 require('./app.less');
 class App extends UiElement {
@@ -33,6 +34,7 @@ class App extends UiElement {
         this.fileInfoContainer = this.findBy('.node-info-container');
         this.graphContainer = this.findBy('.graph-container');
         this.tagContainer = this.findBy('.tag-container');
+        this.attributesContainer = this.findBy('.attributes-container');
     }
 
     loadConfigAsync() {
@@ -66,12 +68,14 @@ class App extends UiElement {
         ])
             .then(([config, dataModel]) => {
                 this.graph = new Graph(width, height, config, this, dataModel);
-                this.tagList = new TagListView(this, this.dataModel);
+                this.tagList = new TagListView(this.dataModel);
+                this.attributesList = new StaticAttributesListView(this.dataModel);
 
                 this.listenTo(this.graph,'nodeSelected', this.onNodeSelected);
 
                 this.graphContainer.appendChild(this.graph.el);
                 this.tagContainer.appendChild(this.tagList.el);
+                this.attributesContainer.appendChild(this.attributesList.el);
             })
             .then(() => this.graphContainer.scrollTo(width / 2 - 400, height / 2 - 250));
     }
@@ -106,15 +110,8 @@ class App extends UiElement {
         node.updateTags(newTagNames, this.dataModel);
         node.save();
     }
-
-    update(timeDeltaInSec) {
-        this.emitEvent('tick', timeDeltaInSec);
-    }
-
 }
 
 const app = new App(appContainer);
-
-
 app.init()
     .then(() => app.start());
