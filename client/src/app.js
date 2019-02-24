@@ -1,41 +1,38 @@
 const $ = require('jquery');
 
-const { Models, ListenableObject } = require('file-graph-shared');
+const UiElement = require('./elements/ui-element');
+
+const { Models } = require('file-graph-shared');
 const appContainer = document.querySelector('#file-graph-app');
 
 // models
 const DataModel = Models.DataModel;
 
 // views
-const FileGraph = require('./file-graph/file-graph');
+const Graph = require('./file-graph/graph');
 const NodeInfo = require('./file-graph/node-info');
 const TagListView = require('./elements/tag-list-view');
 
 require('./app.less');
-class App extends ListenableObject {
+class App extends UiElement {
     constructor(element) {
-        super();
+        super({
+            el: element,
+            cssClasses: 'file-graph-app',
+            template: require('./app.pug')
+        });
         this.dataModel = null;
-        this.fileGraph = null;
+
+        this.graph = null;
         this.tagList = null;
 
         this.selectedNode = null;
         this.displayedFileInfo = null;
 
-        this.el = element;
-        this.el.classList.add('file-graph-app');
-        this.fileInfoContainer = document.createElement('div');
-        this.fileInfoContainer.classList.add('file-info-container');
-
-        this.graphContainer = document.createElement('div');
-        this.graphContainer.classList.add('file-graph-container');
-
-        this.tagContainer = document.createElement('div');
-        this.tagContainer.classList.add('tag-container');
-
-        this.el.appendChild(this.fileInfoContainer);
-        this.el.appendChild(this.tagContainer);
-        this.el.appendChild(this.graphContainer);
+        this.template();
+        this.fileInfoContainer = this.findBy('.node-info-container');
+        this.graphContainer = this.findBy('.graph-container');
+        this.tagContainer = this.findBy('.tag-container');
     }
 
     loadConfigAsync() {
@@ -49,32 +46,38 @@ class App extends ListenableObject {
         });
     }
 
-    loadDataAsync() {
+    loadDataModelAsync() {
         return new Promise((res) => {
             $.get('/graph')
-                .done(res);
+                .done((data) => {
+                    this.dataModel = DataModel.loadFromJSON(data);
+                    res(this.dataModel);
+                });
         });
     }
 
-    start() {
+    init() {
         const width = 2500;
         const height = 2500;
 
         return Promise.all([
             this.loadConfigAsync(),
-            this.loadDataAsync()
+            this.loadDataModelAsync()
         ])
-            .then(([config, data]) => {
-                this.dataModel = DataModel.loadFromJSON(data);
-                this.fileGraph = new FileGraph(width, height, config, this, this.dataModel);
-
-                this.fileGraph.on('nodeSelected', this.onNodeSelected.bind(this));
-
+            .then(([config, dataModel]) => {
+                this.graph = new Graph(width, height, config, this, dataModel);
                 this.tagList = new TagListView(this, this.dataModel);
-                this.graphContainer.appendChild(this.fileGraph.el);
+
+                this.listenTo(this.graph,'nodeSelected', this.onNodeSelected);
+
+                this.graphContainer.appendChild(this.graph.el);
                 this.tagContainer.appendChild(this.tagList.el);
             })
             .then(() => this.graphContainer.scrollTo(width / 2 - 400, height / 2 - 250));
+    }
+
+    start() {
+        this.graph.runSimulationFor(30);
     }
 
     deselectNode() {
@@ -113,33 +116,5 @@ class App extends ListenableObject {
 const app = new App(appContainer);
 
 
-let lastRender = null;
-
-let cycles = 0;
-const times = [];
-
-function loop(timestamp) {
-    const start = Date.now();
-    if (lastRender === null) {
-        lastRender = timestamp;
-        window.requestAnimationFrame(loop);
-        return;
-    }
-    const progress = timestamp - lastRender;
-    app.update(Math.min(500, progress));
-
-    lastRender = timestamp;
-    if (cycles < 15000) {
-        setTimeout(() => window.requestAnimationFrame(loop), 40);
-        times.push(Date.now() - start);
-        cycles++;
-    } else {
-        const average = times.reduce((sum, val) => sum + val, 0) / times.length;
-        console.log('average time taken: ', average, ' ms');
-    }
-}
-
-app.start()
-    .then(() => {
-        window.requestAnimationFrame(loop);
-    });
+app.init()
+    .then(() => app.start());

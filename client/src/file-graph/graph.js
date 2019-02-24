@@ -1,7 +1,8 @@
 const $ = require('jquery');
 const _ = require('lodash');
-const { Models, Utils, ListenableObject } = require('file-graph-shared');
+const { Models, Utils } = require('file-graph-shared');
 const { removeElement } = Utils;
+const UiElement = require('../elements/ui-element');
 
 
 const { Tag } = Models;
@@ -10,9 +11,11 @@ const NodeView = require('./node-view');
 const EdgeView = require('./edge-view');
 
 
-class FileGraph extends ListenableObject {
+class Graph extends UiElement {
     constructor(width, height, config, app, dataModel) {
-        super();
+        super({
+            template: require('./graph.pug')
+        });
         this.width = width;
         this.height = height;
         this._config = config;
@@ -23,15 +26,9 @@ class FileGraph extends ListenableObject {
         this.edges = [];
         this._tags = {};
 
-        this.el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        this.el.setAttribute('width', width);
-        this.el.setAttribute('height', height);
-
-        this.edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        this.nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-
-        this.el.appendChild(this.edgeGroup);
-        this.el.appendChild(this.nodeGroup);
+        this.template({ width, height, addCenterCircle: true });
+        this.edgeGroup = this.findBy('.edge-group');
+        this.nodeGroup = this.findBy('.node-group');
 
         this.listenTo(this.app, 'tick', this.onUpdate);
         this.addCenterCircle();
@@ -42,17 +39,11 @@ class FileGraph extends ListenableObject {
     }
 
     addCenterCircle() {
-        this.centerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        this.centerCircle.setAttribute('r', '5');
-        this.centerCircle.setAttribute('fill', '#000');
-        this.centerCircle.setAttribute('stroke', 'black');
-        this.centerCircle.setAttribute('strokeWidth', '1px');
-
-
-        this.centerCircle.setAttribute('cx', this.width / 2);
-        this.centerCircle.setAttribute('cy', this.height / 2);
-
-        this.el.appendChild(this.centerCircle);
+        this.centerCircle = this.findBy('.center-circle');
+        if (this.centerCircle != null) {
+            this.centerCircle.setAttribute('cx', this.width / 2);
+            this.centerCircle.setAttribute('cy', this.height / 2);
+        }
     }
 
     addNode(node) {
@@ -111,6 +102,33 @@ class FileGraph extends ListenableObject {
         dataModel.edges.forEach(e => this.addEdge(e));
     }
 
+    runSimulationFor(timeInSec) {
+        this.simulateUntilInMs = Date.now() + timeInSec*1000;
+        this.lastRender = null;
+        this.renderTimes = [];
+
+        window.requestAnimationFrame(this.simulate.bind(this));
+    }
+
+    simulate(timestamp) {
+        if (this.lastRender === null) {
+            this.lastRender = timestamp;
+            window.requestAnimationFrame(this.simulate.bind(this));
+            return;
+        }
+        const progress = timestamp - this.lastRender;
+        this.update(Math.min(500, progress));
+
+        this.renderTimes.push(progress);
+        this.lastRender = timestamp;
+        if (this.simulateUntilInMs > Date.now()) {
+            setTimeout(() => window.requestAnimationFrame(this.simulate.bind(this)), 40);
+        } else {
+            const average = this.renderTimes.reduce((sum, val) => sum + val, 0) / this.renderTimes.length;
+            console.log('average time taken: ', average, ' ms');
+        }
+    }
+
     get center() {
         return {
             x: this.width / 2,
@@ -126,7 +144,7 @@ class FileGraph extends ListenableObject {
         return Object.keys(this._tags);
     }
 
-    onUpdate(app, timeDeltaInMs) {
+    update(timeDeltaInMs) {
         const nodes = _.values(this.nodes);
         _.forEach(nodes, node => {
             node.update(timeDeltaInMs, nodes, this.center);
@@ -138,4 +156,4 @@ class FileGraph extends ListenableObject {
     }
 }
 
-module.exports = FileGraph;
+module.exports = Graph;
