@@ -3,80 +3,23 @@ const bodyParser = require('body-parser');
 
 const app = express();
 const path = require('path');
-const fs = require('fs').promises;
-const _ = require('lodash');
 
-const configuration = require('./config');
-const { Node, DataModel } = require('file-graph-shared').Models;
+const Loader = require('./loader');
+const Writer = require('./writer');
 const baseDir = process.argv[2];
-const dataFileName = 'filegraph.json';
-const dataFile = path.join(baseDir, dataFileName);
 
 let dataModel = null;
 let config = null;
 const startPromises = [];
 
-function loadFile() {
-    return fs.readFile(dataFile, 'utf8')
-        .catch(() => JSON.stringify({
-            version: 1,
-            data: {
-                nodes: [],
-                tags: [],
-            },
-            config: configuration.getDefaultConfig(),
-        }));
-}
 
-function parseFileContent(content) {
-    const { data, config: configFromFile } = JSON.parse(content);
-    config = _.defaultsDeep(configFromFile, configuration.getDefaultConfig());
-
-    dataModel = DataModel.loadFromJSON(data);
-}
-
-function readDirectory(baseDirectory, subDir = '') {
-    const fullPath = path.join(baseDirectory, subDir);
-    return fs.readdir(fullPath)
-        .then(result => {
-            return Promise.all(result.map((fileName) => {
-                if (fileName === dataFileName) {
-                    return Promise.resolve([]);
-                }
-
-                return fs.stat(path.join(fullPath, fileName))
-                    .then(stat => {
-                        if (stat.isFile()) {
-                            const constantAttributes = {
-                                directory: subDir
-                            };
-                            return [new Node(subDir + '/' + fileName, fileName, { constantAttributes })];
-                        }
-                        return readDirectory(baseDirectory, path.join(subDir, fileName));
-                    });
-            })).then(fileArrays => _.flatten(fileArrays));
-        });
-}
-
-function addUnknownFiles(nodeList) {
-    nodeList.forEach(node => dataModel.addNode(node));
-}
-
-startPromises.push(loadFile()
-    .then(parseFileContent)
-    .then(() => readDirectory(baseDir))
-    .then(addUnknownFiles)
-    .then(saveDataAsync));
-
-function saveDataAsync() {
-    const toWrite = {
-        version: 1,
-        data: dataModel.toJSON(),
-        config
-    };
-
-    return fs.writeFile(dataFile, JSON.stringify(toWrite), 'utf8');
-}
+startPromises.push(Loader
+    .loadData(baseDir)
+    .then(({ dataModel: _dataModel, config: _config}) => {
+        dataModel = _dataModel;
+        config = _config;
+        return Writer.writeData(baseDir, dataModel, config);
+    }));
 
 app.use(bodyParser.json({}));
 app.get('/', function (req, res) {
@@ -102,7 +45,7 @@ app.post('/node', (req, res) => {
     const node = dataModel._nodes[nodeJson.id];
     const changes = node.updateTags(newTags, dataModel);
 
-    saveDataAsync()
+    Writer.writeData(baseDir, dataModel, config)
         .then(() => res.send(changes));
 });
 
