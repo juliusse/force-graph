@@ -3,7 +3,7 @@ const fs = require('fs').promises;
 const _ = require('lodash');
 
 const configuration = require('./config');
-const { Node, DataModel, StaticAttribute     } = require('file-graph-shared').Models;
+const { Node, DataModel, StaticAttribute } = require('file-graph-shared').Models;
 const dataFileName = 'filegraph.json';
 
 
@@ -83,24 +83,32 @@ class Loader {
                 return fs.readFile(path, 'utf8')
                     .then(data => {
                         const rows = data.split('\r\n');
+                        rows.shift();
 
                         rows.forEach(row => {
-                            while (row.indexOf('\t') !== -1) {
-                                row = row.replace('\t', '');
-                            }
-
-                            if (row.length === 0) {
+                            const [title, author, category, languages, state, series] =
+                                row.split(';');
+                            if (title === '') {
                                 return;
                             }
+                            const staticAttributes = [
+                                dataModel.getStaticAttribute('Autor', author),
+                                dataModel.getStaticAttribute('Kategorie', category),
+                                dataModel.getStaticAttribute('Sprache', languages),
+                                dataModel.getStaticAttribute('Status', state),
+                            ];
 
-                            const values = row.split(';');
-                            const title = values.shift();
-                            const tags = values.map(v => dataModel.getTagForName(v));
+                            if(series) {
+                                staticAttributes.push(
+                                    dataModel.getStaticAttribute('Reihe', series)
+                                );
+                            }
 
-                            dataModel.addNode(new Node(title, title, { tags }));
+
+                            dataModel.addNode(new Node(title, title, { staticAttributes }));
                         });
 
-                        return { dataModel, config};
+                        return { dataModel, config };
                     });
             });
     }
