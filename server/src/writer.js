@@ -9,7 +9,7 @@ function getDataFilePath(basePath) {
 }
 
 class Writer {
-    static writeData(basePath, dataModel, config) {
+    static writeData(basePath, dataModel) {
         return fs.stat(basePath)
             .then(stat => {
                 if(stat.isFile()) {
@@ -21,7 +21,6 @@ class Writer {
                 const toWrite = {
                     version: 1,
                     data: dataModel.toJSON(),
-                    config
                 };
 
                 return fs.writeFile(dataFile, JSON.stringify(toWrite), 'utf8');

@@ -15,9 +15,9 @@ const startPromises = [];
 
 startPromises.push(Loader
     .loadData(baseDir)
-    .then(({ dataModel: _dataModel, config: _config}) => {
+    .then(({ dataModel: _dataModel }) => {
         dataModel = _dataModel;
-        config = _config;
+        config = dataModel._config;
         return Writer.writeData(baseDir, dataModel, config);
     }));
 
@@ -30,7 +30,7 @@ app.use('/js', express.static('../client/bin'));
 express.static('./entrypoints');
 
 app.get('/graph', (req, res) => {
-    res.json(dataModel.toJSON())
+    res.json(dataModel.toJSON());
 });
 
 app.get('/config', (req, res) => {

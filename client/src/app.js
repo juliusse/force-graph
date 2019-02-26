@@ -81,7 +81,7 @@ class App extends UiElement {
     }
 
     start() {
-        this.graph.runSimulationFor(30);
+        this.graph.runSimulationFor(300);
     }
 
     deselectNode() {

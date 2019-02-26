@@ -2,7 +2,6 @@ const path = require('path');
 const fs = require('fs').promises;
 const _ = require('lodash');
 
-const configuration = require('./config');
 const { Node, DataModel, StaticAttribute } = require('file-graph-shared').Models;
 const dataFileName = 'filegraph.json';
 
@@ -11,24 +10,8 @@ function loadDataFile(baseDir) {
     const dataFile = path.join(baseDir, dataFileName);
 
     return fs.readFile(dataFile, 'utf8')
-        .catch(() => JSON.stringify({
-            version: 1,
-            data: {
-                nodes: [],
-                tags: [],
-            },
-            config: configuration.getDefaultConfig(),
-        }))
-        .then(parseDataFileContent);
-}
-
-function parseDataFileContent(content) {
-    const { data, config: configFromFile } = JSON.parse(content);
-
-    return {
-        config: _.defaultsDeep(configFromFile, configuration.getDefaultConfig()),
-        dataModel: DataModel.loadFromJSON(data)
-    };
+        .then((data) => DataModel.loadFromJSON(data))
+        .catch(() => DataModel.createNew());
 }
 
 function readDirectoryTree(baseDirectory, subDir = '') {
@@ -54,10 +37,10 @@ function readDirectoryTree(baseDirectory, subDir = '') {
         });
 }
 
-function addUnknownFiles([{ config, dataModel }, nodeList]) {
+function addUnknownFiles([dataModel, nodeList]) {
     nodeList.forEach(node => dataModel.addNode(node));
 
-    return { config, dataModel };
+    return { dataModel };
 }
 
 class Loader {
@@ -78,38 +61,36 @@ class Loader {
     }
 
     static loadDataFromFile(path) {
-        return loadDataFile('none')
-            .then(({ config, dataModel }) => {
-                return fs.readFile(path, 'utf8')
-                    .then(data => {
-                        const rows = data.split('\r\n');
-                        rows.shift();
+        const dataModel = DataModel.createNew();
+        return fs.readFile(path, 'utf8')
+            .then(data => {
+                const rows = data.split('\r\n');
+                rows.shift();
 
-                        rows.forEach(row => {
-                            const [title, author, category, languages, state, series] =
-                                row.split(';');
-                            if (title === '') {
-                                return;
-                            }
-                            const staticAttributes = [
-                                dataModel.getStaticAttribute('Autor', author),
-                                dataModel.getStaticAttribute('Kategorie', category),
-                                dataModel.getStaticAttribute('Sprache', languages),
-                                dataModel.getStaticAttribute('Status', state),
-                            ];
+                rows.forEach(row => {
+                    const [title, author, category, languages, state, series] =
+                        row.split(';');
+                    if (title === '') {
+                        return;
+                    }
+                    const staticAttributes = [
+                        dataModel.getStaticAttribute('Autor', author),
+                        dataModel.getStaticAttribute('Kategorie', category),
+                        dataModel.getStaticAttribute('Sprache', languages),
+                        dataModel.getStaticAttribute('Status', state),
+                    ];
 
-                            if(series) {
-                                staticAttributes.push(
-                                    dataModel.getStaticAttribute('Reihe', series)
-                                );
-                            }
+                    if (series) {
+                        staticAttributes.push(
+                            dataModel.getStaticAttribute('Reihe', series)
+                        );
+                    }
 
 
-                            dataModel.addNode(new Node(title, title, { staticAttributes }));
-                        });
+                    dataModel.addNode(new Node(title, title, { staticAttributes }));
+                });
 
-                        return { dataModel, config };
-                    });
+                return { dataModel };
             });
     }
 }

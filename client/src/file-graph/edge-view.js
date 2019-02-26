@@ -92,9 +92,9 @@ class EdgeView extends UiElement {
     }
 
     getForce() {
-        const pathForce = _.values(this.edge.staticAttributes).length * this.config.forces.types.sameStaticAttribute;
-        const tagForce = _.values(this.edge.tags).length * this.config.forces.types.sameTag;
-        return pathForce + tagForce;
+        const saForce = _.sum(this.edge.staticAttributes.map(sa => sa.get('force')));
+        const tagForce = _.sum(this.edge.tags.map(t => t.get('force')));
+        return saForce + tagForce;
     }
 
     update(timeDelta) {
