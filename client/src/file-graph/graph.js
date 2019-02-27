@@ -1,48 +1,31 @@
-const $ = require('jquery');
 const _ = require('lodash');
-const { Models, Utils } = require('file-graph-shared');
-const { removeElement } = Utils;
+
+// views
 const UiElement = require('../elements/ui-element');
-
-
-const { Tag } = Models;
-
 const NodeView = require('./node-view');
 const EdgeView = require('./edge-view');
 
-
 class Graph extends UiElement {
-    constructor(width, height, config, app, dataModel) {
+    constructor(dataModel, {width = 2500, height = 2500 } = {}) {
         super({
             template: require('./graph.pug')
         });
         this.width = width;
         this.height = height;
-        this._config = config;
-        this.app = app;
         this.dataModel = dataModel;
 
         this.nodes = {};
-        this.edges = [];
+        this.edges = {};
         this._tags = {};
 
         this.template({ width, height, addCenterCircle: true });
         this.edgeGroup = this.findBy('.edge-group');
         this.nodeGroup = this.findBy('.node-group');
 
-        this.addCenterCircle();
         this.init(this.dataModel);
 
         this.listenTo(this.dataModel, 'added:edge', (dm, edge) => this.addEdge(edge));
         this.listenTo(this.dataModel, 'removed:edge', (dm, edge) => this.removeEdge(edge));
-    }
-
-    addCenterCircle() {
-        this.centerCircle = this.findBy('.center-circle');
-        if (this.centerCircle != null) {
-            this.centerCircle.setAttribute('cx', this.width / 2);
-            this.centerCircle.setAttribute('cy', this.height / 2);
-        }
     }
 
     addNode(node) {
@@ -63,18 +46,13 @@ class Graph extends UiElement {
         const rightNodeView = this.nodes[edge.rightNode.id];
 
         const edgeView = new EdgeView(this, edge, leftNodeView, rightNodeView);
-        this.edges.push(edgeView);
+        this.edges[edge.id] = edgeView;
         if (edgeView.isVisible) {
             this.edgeGroup.appendChild(edgeView.el);
         }
 
 
         this.listenTo(edgeView, 'change:isVisible', (edgeView, isVisible) => {
-            if (!this.edges.some(e => e === edgeView)) {
-                // TODO correct event listening
-                return;
-            }
-
             isVisible ?
                 this.edgeGroup.appendChild(edgeView.el) :
                 this.edgeGroup.removeChild(edgeView.el);
@@ -84,16 +62,11 @@ class Graph extends UiElement {
     }
 
     removeEdge(edgeModel) {
-        const edge = this.edges.find(edgeView => {
-            return edgeView.edge === edgeModel;
-        });
+        const edgeView = this.edges[edgeModel.id];
+        edgeView.remove();
 
-        if (edge.isVisible) {
-            this.edgeGroup.removeChild(edge.el);
-        }
-
-        this.stopListening(edge, 'change:isVisible');
-        this.edges = removeElement(this.edges, edge);
+        this.stopListening(edgeView, 'change:isVisible');
+        delete this.edges[edgeModel.id];
     }
 
     init(dataModel) {
@@ -136,7 +109,7 @@ class Graph extends UiElement {
     }
 
     get config() {
-        return this._config;
+        return this.dataModel.config.client;
     }
 
     get tags() {

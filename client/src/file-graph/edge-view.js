@@ -64,11 +64,6 @@ class EdgeView extends UiElement {
     removeTag(tag) {
         this.tags = removeElement(this.tags, tag);
         this.updateVisibility();
-
-        if (this.tags.length === 0 && this.path == null) {
-            this.edge.removeListeners();
-            this.fileGraph.removeEdge(this.leftNode.id, this.rightNode.id);
-        }
     }
 
     updateCssClass() {

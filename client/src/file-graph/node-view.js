@@ -1,4 +1,3 @@
-const $ = require('jquery');
 const UiElement = require('../elements/ui-element');
 
 require('./node-view.less');
@@ -58,23 +57,6 @@ class NodeView extends UiElement {
         return {
             x: this.x,
             y: this.y,
-        };
-    }
-
-    calculateCenterDelta(center) {
-        const centerForceMaxStrength = 50;
-        const centerForceMaxDistance = 400;
-
-
-        const distanceToCenterX = this.position.x - center.x;
-        const distanceToCenterY = this.position.y - center.y;
-        const distance = Math.sqrt(distanceToCenterX * distanceToCenterX + distanceToCenterY * distanceToCenterY);
-        const forceStrength = Math.max(0, centerForceMaxDistance - distance) / centerForceMaxDistance * centerForceMaxStrength;
-
-
-        return {
-            x: (distanceToCenterX / distance) * forceStrength,
-            y: (distanceToCenterY / distance) * forceStrength,
         };
     }
 
@@ -151,17 +133,18 @@ class NodeView extends UiElement {
         };
     };
 
-    update(timeDeltaInMs, nodes, center) {
+    update(timeDeltaInMs, nodes) {
         this.timeSinceLastForceUpdate += timeDeltaInMs;
         if (this.timeSinceLastForceUpdate > this.config.nodeForceUpdateAfterInMs) {
-            const centerDelta = { x: 0, y: 0 };
             const edgesDelta = this.calculateEdgeForce();
             const repellingDelta = this.calculateRepellingForce(nodes);
 
+
             this.currentForce = {
-                x: centerDelta.x + edgesDelta.x + repellingDelta.x,
-                y: centerDelta.y + edgesDelta.y + repellingDelta.y
+                x: edgesDelta.x + repellingDelta.x,
+                y: edgesDelta.y + repellingDelta.y
             };
+
             this.timeSinceLastForceUpdate = 0;
         }
 

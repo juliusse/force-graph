@@ -10,8 +10,10 @@ function loadDataFile(baseDir) {
     const dataFile = path.join(baseDir, dataFileName);
 
     return fs.readFile(dataFile, 'utf8')
-        .then((data) => DataModel.loadFromJSON(data))
-        .catch(() => DataModel.createNew());
+        .then((data) => {
+            const json = JSON.parse(data);
+            return DataModel.loadFromJSON(json.data);
+        }, (err) => DataModel.createNew());
 }
 
 function readDirectoryTree(baseDirectory, subDir = '') {

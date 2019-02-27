@@ -1,18 +1,18 @@
 const $ = require('jquery');
 
-const UiElement = require('./elements/ui-element');
-
-const { Models } = require('file-graph-shared');
-const appContainer = document.querySelector('#file-graph-app');
 
 // models
+const { Models } = require('file-graph-shared');
 const DataModel = Models.DataModel;
 
 // views
+const UiElement = require('./elements/ui-element');
 const Graph = require('./file-graph/graph');
-const NodeInfo = require('./file-graph/node-info');
+const NodeInfoView = require('./file-graph/node-info');
 const TagListView = require('./elements/tag-list-view');
 const StaticAttributesListView = require('./elements/static-attribute/static-attribute-list-view');
+
+const appContainer = document.querySelector('#file-graph-app');
 
 require('./app.less');
 class App extends UiElement {
@@ -37,17 +37,6 @@ class App extends UiElement {
         this.attributesContainer = this.findBy('.attributes-container');
     }
 
-    loadConfigAsync() {
-        return new Promise((res) => {
-            $.get('/config')
-                .done(({ config }) => {
-                    this.config = config;
-                    window.config = config;
-                    res(config);
-                });
-        });
-    }
-
     loadDataModelAsync() {
         return new Promise((res) => {
             $.get('/graph')
@@ -62,16 +51,13 @@ class App extends UiElement {
         const width = 2500;
         const height = 2500;
 
-        return Promise.all([
-            this.loadConfigAsync(),
-            this.loadDataModelAsync()
-        ])
-            .then(([config, dataModel]) => {
-                this.graph = new Graph(width, height, config, this, dataModel);
+        return this.loadDataModelAsync()
+            .then(dataModel => {
+                this.graph = new Graph(dataModel, { width, height });
                 this.tagList = new TagListView(this.dataModel);
                 this.attributesList = new StaticAttributesListView(this.dataModel);
 
-                this.listenTo(this.graph,'nodeSelected', this.onNodeSelected);
+                this.listenTo(this.graph, 'nodeSelected', this.onNodeSelected);
 
                 this.graphContainer.appendChild(this.graph.el);
                 this.tagContainer.appendChild(this.tagList.el);
@@ -97,16 +83,15 @@ class App extends UiElement {
         this.deselectNode();
 
         this.selectedNode = node;
-        this.displayedFileInfo = new NodeInfo(node);
-        this.displayedFileInfo.on('clicked:close', this.deselectNode.bind(this));
+        this.displayedFileInfo = new NodeInfoView(node);
 
+        this.listenTo(this.displayedFileInfo, 'clicked:close', this.deselectNode);
         this.listenTo(this.displayedFileInfo, 'changedTags:node', this.updateNodeTags);
-
 
         this.fileInfoContainer.appendChild(this.displayedFileInfo.el);
     }
 
-    updateNodeTags(fileInfoDialog, {node, newTagNames}) {
+    updateNodeTags(fileInfoDialog, { node, newTagNames }) {
         node.updateTags(newTagNames, this.dataModel);
         node.save();
     }
