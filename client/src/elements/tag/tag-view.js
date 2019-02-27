@@ -1,7 +1,4 @@
-const template = `
-<div class="tag"></div>`;
-const UiElement = require('./ui-element');
-
+const UiElement = require('../ui-element');
 
 require('./tag-view.less');
 class TagView extends UiElement {

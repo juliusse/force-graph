@@ -1,8 +1,7 @@
-const UiElement = require('./ui-element');
+const UiElement = require('../ui-element');
 const TagView = require('./tag-view');
 
 require('./tag-list-view.less');
-
 class TagListView extends UiElement {
     constructor(dataModel) {
         super({

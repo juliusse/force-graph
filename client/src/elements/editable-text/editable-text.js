@@ -1,5 +1,5 @@
 const $ = require('jquery');
-const UiElement = require('./ui-element');
+const UiElement = require('../ui-element');
 
 require('./editable-text.less');
 class EditableText extends UiElement {

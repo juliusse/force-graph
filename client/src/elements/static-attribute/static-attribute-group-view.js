@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const UiElement = require('../ui-element');
 const StaticAttributeView = require('./static-attribute-view');
-const EditableText = require('../editable-text');
+const EditableText = require('../editable-text/editable-text');
 
 require('./static-attribute-group-view.less');
 

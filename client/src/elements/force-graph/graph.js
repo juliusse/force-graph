@@ -1,7 +1,7 @@
 const _ = require('lodash');
 
 // views
-const UiElement = require('../elements/ui-element');
+const UiElement = require('../ui-element');
 const NodeView = require('./node-view');
 const EdgeView = require('./edge-view');
 

@@ -7,9 +7,9 @@ const DataModel = Models.DataModel;
 
 // views
 const UiElement = require('./elements/ui-element');
-const Graph = require('./file-graph/graph');
-const NodeInfoView = require('./file-graph/node-info');
-const TagListView = require('./elements/tag-list-view');
+const Graph = require('./elements/force-graph/graph');
+const NodeInfoView = require('./elements/node-info/node-info');
+const TagListView = require('./elements/tag/tag-list-view');
 const StaticAttributesListView = require('./elements/static-attribute/static-attribute-list-view');
 
 const appContainer = document.querySelector('#file-graph-app');

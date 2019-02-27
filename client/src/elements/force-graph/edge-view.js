@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const { Utils } = require('file-graph-shared');
 const { removeElement } = Utils;
-const UiElement = require('../elements/ui-element');
+const UiElement = require('../ui-element');
 
 
 require('./edge-view.less');

@@ -1,7 +1,6 @@
-const UiElement = require('../elements/ui-element');
+const UiElement = require('../ui-element');
 
 require('./node-view.less');
-
 class NodeView extends UiElement {
     constructor(fileGraph, node, pos = {}) {
         super({

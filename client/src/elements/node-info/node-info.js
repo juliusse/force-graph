@@ -1,8 +1,8 @@
 const $ = require('jquery');
-const UiElement = require('../elements/ui-element');
 
 // views
-const EditableText = require('../elements/editable-text');
+const UiElement = require('../ui-element');
+const EditableText = require('../editable-text/editable-text');
 
 require('./node-info.less');
 class NodeInfo extends UiElement {
