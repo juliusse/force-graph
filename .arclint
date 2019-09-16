@@ -1,0 +1,13 @@
+{
+  "linters": {
+    "client":
+        {
+            "type": "eslint",
+            "include": "(.*client.*\\.js$)",
+            "bin": "./client/node_modules/.bin/eslint",
+            "eslint.config": "./client/eslint.json",
+            "eslint.env": "browser",
+            "eslint.cwd": "./client"
+        }
+  }
+}

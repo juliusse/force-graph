@@ -1,6 +1,5 @@
 const $ = require('jquery');
 
-
 // models
 const { Models } = require('file-graph-shared');
 const DataModel = Models.DataModel;
