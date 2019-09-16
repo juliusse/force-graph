@@ -1,5 +1,5 @@
 {
   "phabricator.uri" : "http://127.0.0.1",
-  "arc.land.onto.default" : "origin/phab-demo",
+  "arc.land.onto.default" : "phab-demo",
   "load": ["pinterest-linters"]
 }
