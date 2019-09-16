@@ -25,6 +25,7 @@ class App extends UiElement {
 
         this.graph = null;
         this.tagList = null;
+        this.tagVargpg = "";
 
         this.selectedNode = null;
         this.displayedFileInfo = null;
